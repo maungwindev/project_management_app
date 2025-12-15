@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
+import 'package:pm_app/service/auth_service.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:pm_app/controller/auth_controller.dart';
 import 'package:pm_app/controller/category_controller.dart';
@@ -58,7 +59,7 @@ class AppBindings extends Bindings {
     Get.lazyPut(() => DioClient(sharedPref: Get.find(), dio: Get.find()));
 
     // Repositories
-    Get.lazyPut(() => AuthRepository(dio: Get.find(), logService: Get.find()));
+    Get.lazyPut(() => AuthRepository(authService: Get.find(), logService: Get.find()));
     Get.lazyPut(() => ProductsRepo(dioClient: Get.find(), logger: Get.find()));
     Get.lazyPut(() => CategoryRepository(dioClient: Get.find(), logger: Get.find()));
 
@@ -71,5 +72,6 @@ class AppBindings extends Bindings {
           authRepository: Get.find(),
           sharedPref: Get.find(),
         ));
+    Get.lazyPut(()=>AuthService());
   }
 }

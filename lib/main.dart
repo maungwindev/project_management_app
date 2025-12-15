@@ -3,11 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:pm_app/core/const/firebase_const.dart';
 import 'package:pm_app/core/const/global_const.dart';
 import 'package:pm_app/core/local_data/shared_prefs.dart';
 import 'package:pm_app/core/router/app_router.dart';
 import 'package:pm_app/controller/theme_controller.dart';
+import 'package:pm_app/firebase_options.dart';
 import 'package:pm_app/injection.dart';
 
 Future<void> main() async {
@@ -15,7 +15,7 @@ Future<void> main() async {
   
   WidgetsFlutterBinding.ensureInitialized();
    await Firebase.initializeApp(
-    options: FirebaseConst.firebaseConfig,
+    options: DefaultFirebaseOptions.currentPlatform,
   );
   await EasyLocalization.ensureInitialized();
 

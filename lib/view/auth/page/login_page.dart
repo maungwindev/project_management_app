@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:pm_app/controller/auth_controller.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,27 +13,36 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final AuthController authController = Get.find<AuthController>();
 
   bool isLoading = false;
 
   // Example login function
-  void login() {
+  void login() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        isLoading = true;
-      });
+      final success = await authController.login(
+        requestBody: {
+          'email': emailController.text,
+          'password': passwordController.text,
+        },
+      );
 
-      // Simulate a login delay
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() {
-          isLoading = false;
-        });
-
-        // Here, handle login success or failure
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
+      if (success) {
+        Get.snackbar(
+          'Success',
+          'Login successful',
+          snackPosition: SnackPosition.BOTTOM,
         );
-      });
+
+        // Navigate to home/dashboard
+        Get.offAllNamed('/home');
+      } else {
+        Get.snackbar(
+          'Login Failed',
+          'Invalid email or password',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
     }
   }
 
@@ -97,18 +108,22 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : login,
-                      child: isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                          : const Text('Login', style: TextStyle(fontSize: 18)),
-                    ),
-                  ),
+                  Obx(() {
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed:
+                            authController.isLoading.value ? null : login,
+                        child: authController.isLoading.value
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
+                            : const Text('Login',
+                                style: TextStyle(fontSize: 18)),
+                      ),
+                    );
+                  }),
+
                   const SizedBox(height: 16),
                   // TextButton(
                   //   onPressed: () {},

@@ -13,6 +13,7 @@ class SharedPref {
   final String bearerToken = "USER_TOKEN";
   final String themeKey = "APP_THEME";
   final String locationKey = "APP_LOCATION"; 
+  final String userInfo = "USER_INFO";
 
   /// Ensure SharedPreferences is initialized
   Future<void> _ensureInitialized() async {
