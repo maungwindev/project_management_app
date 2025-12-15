@@ -1,9 +1,9 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:project_frame/core/const/api_const.dart';
-import 'package:project_frame/core/network/dio_client.dart';
-import 'package:project_frame/core/utils/custom_logger.dart';
-import 'package:project_frame/core/utils/exception.dart';
-import 'package:project_frame/models/response_models/product_model.dart';
+import 'package:pm_app/core/const/api_const.dart';
+import 'package:pm_app/core/network/dio_client.dart';
+import 'package:pm_app/core/utils/custom_logger.dart';
+import 'package:pm_app/core/utils/exception.dart';
+import 'package:pm_app/models/response_models/product_model.dart';
 
 class ProductsRepo {
   

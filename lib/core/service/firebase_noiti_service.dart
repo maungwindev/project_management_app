@@ -1,8 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:project_frame/core/const/firebase_const.dart';
-import 'package:project_frame/core/network/dio_client.dart';
-import 'package:project_frame/core/service/local_noti_service.dart';
+import 'package:pm_app/core/const/firebase_const.dart';
+import 'package:pm_app/core/network/dio_client.dart';
+import 'package:pm_app/core/service/local_noti_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:googleapis_auth/auth_io.dart' as auth;
 

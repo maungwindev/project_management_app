@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:project_frame/controller/theme_controller.dart'; // adjust import path
+import 'package:pm_app/controller/theme_controller.dart'; // adjust import path
 
 class ThemeSwitch extends StatelessWidget {
   const ThemeSwitch({super.key});

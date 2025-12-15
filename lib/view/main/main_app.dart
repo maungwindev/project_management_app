@@ -2,14 +2,14 @@
 // import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:project_frame/controller/auth_cubit/auth_cubit.dart';
-// import 'package:project_frame/controller/category_cubit/category_cubit.dart';
-// import 'package:project_frame/controller/internet_cubit/internet_connection_cubit.dart';
-// import 'package:project_frame/controller/products_cubit/products_cubit.dart';
-// import 'package:project_frame/controller/theme_cubit/theme_cubit.dart';
-// import 'package:project_frame/core/const/global_const.dart';
-// import 'package:project_frame/core/router/app_router.dart';
-// import 'package:project_frame/injection_container.dart' as ic;
+// import 'package:pm_app/controller/auth_cubit/auth_cubit.dart';
+// import 'package:pm_app/controller/category_cubit/category_cubit.dart';
+// import 'package:pm_app/controller/internet_cubit/internet_connection_cubit.dart';
+// import 'package:pm_app/controller/products_cubit/products_cubit.dart';
+// import 'package:pm_app/controller/theme_cubit/theme_cubit.dart';
+// import 'package:pm_app/core/const/global_const.dart';
+// import 'package:pm_app/core/router/app_router.dart';
+// import 'package:pm_app/injection_container.dart' as ic;
 
 // /// main app
 // class MyApp extends StatefulWidget {

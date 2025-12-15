@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:project_frame/controller/connection_controller.dart';
-import 'package:project_frame/core/component/internet_error.dart';
-import 'package:project_frame/core/component/loading_widget.dart';
+import 'package:pm_app/controller/connection_controller.dart';
+import 'package:pm_app/core/component/internet_error.dart';
+import 'package:pm_app/core/component/loading_widget.dart';
 
 class ConnectionAwareWidget extends StatelessWidget {
   const ConnectionAwareWidget({

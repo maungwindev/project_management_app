@@ -23,10 +23,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -50,20 +47,29 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBQ4Z0CuK99pL_frNJjrTSeyu7ezbTs5kU',
-    appId: '1:996624453786:web:0b9e60b738aae5349e4f23',
-    messagingSenderId: '996624453786',
-    projectId: 'khamenkhai',
-    authDomain: 'khamenkhai.firebaseapp.com',
-    storageBucket: 'khamenkhai.firebasestorage.app',
-    measurementId: 'G-0G2Z8WE5T2',
+    apiKey: 'AIzaSyBZcatoyNdXoo2YTHLvQWeIHBeH3t9avjE',
+    appId: '1:287735508308:web:471ae53e99180b9e35acc1',
+    messagingSenderId: '287735508308',
+    projectId: 'project-management-app-7ace8',
+    authDomain: 'project-management-app-7ace8.firebaseapp.com',
+    storageBucket: 'project-management-app-7ace8.firebasestorage.app',
+    measurementId: 'G-4D2FSK3F09',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBPSB0r8tiQxvVy3FOHKchx6T-pfJekKKI',
-    appId: '1:996624453786:android:c8f4c527bd07a7589e4f23',
-    messagingSenderId: '996624453786',
-    projectId: 'khamenkhai',
-    storageBucket: 'khamenkhai.firebasestorage.app',
+    apiKey: 'AIzaSyBt5_iIdXP3JpiBigc_cn1YXWmMPuKKFtk',
+    appId: '1:287735508308:android:def3ea397262f93b35acc1',
+    messagingSenderId: '287735508308',
+    projectId: 'project-management-app-7ace8',
+    storageBucket: 'project-management-app-7ace8.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAJuWbVShqFmThVPCvL_dQfLnl9DCcRHRw',
+    appId: '1:287735508308:ios:959e743506b8469735acc1',
+    messagingSenderId: '287735508308',
+    projectId: 'project-management-app-7ace8',
+    storageBucket: 'project-management-app-7ace8.firebasestorage.app',
+    iosBundleId: 'com.example.projectFrame',
   );
 }

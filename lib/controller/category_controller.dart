@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:project_frame/models/response_models/category_model.dart';
-import 'package:project_frame/repository/categories_repo.dart';
+import 'package:pm_app/models/response_models/category_model.dart';
+import 'package:pm_app/repository/categories_repo.dart';
 
 enum CategoryStatus { initial, loading, success, error }
 

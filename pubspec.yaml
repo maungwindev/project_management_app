@@ -1,4 +1,4 @@
-name: project_frame
+name: pm_app
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -60,6 +60,7 @@ dependencies:
   responsive_builder: ^0.7.1
   custom_refresh_indicator: ^4.0.1
   get: ^4.7.2
+  firebase_auth: ^5.7.0
 
 dev_dependencies:
   flutter_test:

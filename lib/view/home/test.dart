@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:project_frame/core/component/custom_error_widget.dart';
-import 'package:project_frame/core/component/internet_error.dart';
-import 'package:project_frame/core/component/loading_widget.dart';
-import 'package:project_frame/view/theme/swith_theme.dart';
+import 'package:pm_app/core/component/custom_error_widget.dart';
+import 'package:pm_app/core/component/internet_error.dart';
+import 'package:pm_app/core/component/loading_widget.dart';
+import 'package:pm_app/view/theme/swith_theme.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 
 class TestScreen extends StatefulWidget {

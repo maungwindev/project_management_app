@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:project_frame/core/utils/context_extension.dart';
+import 'package:pm_app/core/utils/context_extension.dart';
 
 class LoadingWidget extends StatelessWidget {
   const LoadingWidget({super.key, this.color, this.radius = 15});

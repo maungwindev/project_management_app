@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:project_frame/core/const/theme_const.dart';
-import 'package:project_frame/core/local_data/shared_prefs.dart';
+import 'package:pm_app/core/const/theme_const.dart';
+import 'package:pm_app/core/local_data/shared_prefs.dart';
 
 class ThemeController extends GetxController {
   final SharedPref sharedPref;

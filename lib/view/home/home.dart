@@ -1,11 +1,11 @@
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:project_frame/controller/product_controller.dart';
-import 'package:project_frame/core/component/custom_error_widget.dart';
-import 'package:project_frame/core/utils/context_extension.dart';
-import 'package:project_frame/models/response_models/product_model.dart';
-import 'package:project_frame/view/theme/swith_theme.dart';
+import 'package:pm_app/controller/product_controller.dart';
+import 'package:pm_app/core/component/custom_error_widget.dart';
+import 'package:pm_app/core/utils/context_extension.dart';
+import 'package:pm_app/models/response_models/product_model.dart';
+import 'package:pm_app/view/theme/swith_theme.dart';
 
 
 class HomeScreen extends StatefulWidget {

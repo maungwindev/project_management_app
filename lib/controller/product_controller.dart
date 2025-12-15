@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:project_frame/models/response_models/product_model.dart';
-import 'package:project_frame/repository/products_repo.dart';
+import 'package:pm_app/models/response_models/product_model.dart';
+import 'package:pm_app/repository/products_repo.dart';
 
 class ProductsController extends GetxController {
   final ProductsRepo productRepo;

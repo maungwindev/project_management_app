@@ -1,16 +1,18 @@
-import 'package:project_frame/core/const/api_const.dart';
-import 'package:project_frame/core/network/dio_client.dart';
-import 'package:project_frame/models/response_models/user_model.dart';
-import 'package:project_frame/core/utils/custom_logger.dart';
+import 'package:get/get.dart';
+import 'package:pm_app/core/const/api_const.dart';
+import 'package:pm_app/core/network/dio_client.dart';
+import 'package:pm_app/models/response_models/user_model.dart';
+import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:pm_app/service/auth_service.dart';
 
 /// AUTHENTICATION REPOSITORY
 class AuthRepository {
-  
+  final AuthService authService;
   final DioClient dio;
   final CustomLogger logService;
 
-  AuthRepository({required this.dio, required this.logService});
+  AuthRepository({required this.authRepository,required this.dio, required this.logService});
 
   /// Helper method for handling POST requests
   Future<Either<String, UserResponseModel>> _postRequest({
@@ -90,6 +92,8 @@ class AuthRepository {
   Future<Either<String, UserResponseModel>> login({
     required Map<String, dynamic> requestBody,
   }) async {
+
+    final responseData = authService.login(requestBody: requestBody);
     return await _postRequest(
       apiUrl: ApiConst.LOGIN,
       requestBody: requestBody,

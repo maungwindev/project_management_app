@@ -1,6 +1,6 @@
 {
-    "name": "project_frame",
-    "short_name": "project_frame",
+    "name": "pm_app",
+    "short_name": "pm_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

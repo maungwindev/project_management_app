@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:project_frame/core/local_data/shared_prefs.dart';
-import 'package:project_frame/core/utils/exception.dart';
+import 'package:pm_app/core/local_data/shared_prefs.dart';
+import 'package:pm_app/core/utils/exception.dart';
 
 class DioClient {
   final SharedPref sharedPref;

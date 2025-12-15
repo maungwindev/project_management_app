@@ -3,18 +3,18 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-import 'package:project_frame/controller/auth_controller.dart';
-import 'package:project_frame/controller/category_controller.dart';
-import 'package:project_frame/controller/connection_controller.dart';
-import 'package:project_frame/controller/product_controller.dart';
-import 'package:project_frame/controller/theme_controller.dart';
-import 'package:project_frame/core/const/api_const.dart';
-import 'package:project_frame/core/local_data/shared_prefs.dart';
-import 'package:project_frame/core/network/dio_client.dart';
-import 'package:project_frame/core/utils/custom_logger.dart';
-import 'package:project_frame/repository/auth_repo.dart';
-import 'package:project_frame/repository/categories_repo.dart';
-import 'package:project_frame/repository/products_repo.dart';
+import 'package:pm_app/controller/auth_controller.dart';
+import 'package:pm_app/controller/category_controller.dart';
+import 'package:pm_app/controller/connection_controller.dart';
+import 'package:pm_app/controller/product_controller.dart';
+import 'package:pm_app/controller/theme_controller.dart';
+import 'package:pm_app/core/const/api_const.dart';
+import 'package:pm_app/core/local_data/shared_prefs.dart';
+import 'package:pm_app/core/network/dio_client.dart';
+import 'package:pm_app/core/utils/custom_logger.dart';
+import 'package:pm_app/repository/auth_repo.dart';
+import 'package:pm_app/repository/categories_repo.dart';
+import 'package:pm_app/repository/products_repo.dart';
 
 class AppBindings extends Bindings {
   @override

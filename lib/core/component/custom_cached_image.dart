@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:project_frame/core/component/loading_widget.dart';
+import 'package:pm_app/core/component/loading_widget.dart';
 
 class CustomNetworkImage extends StatelessWidget {
   final String imageUrl;

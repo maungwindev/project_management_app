@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:project_frame/core/const/app_colors.dart';
+import 'package:pm_app/core/const/app_colors.dart';
 
 @immutable
 class AppTheme {

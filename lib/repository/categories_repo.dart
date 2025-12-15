@@ -1,8 +1,8 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:project_frame/core/const/api_const.dart';
-import 'package:project_frame/core/network/dio_client.dart';
-import 'package:project_frame/core/utils/custom_logger.dart';
-import 'package:project_frame/models/response_models/category_model.dart';
+import 'package:pm_app/core/const/api_const.dart';
+import 'package:pm_app/core/network/dio_client.dart';
+import 'package:pm_app/core/utils/custom_logger.dart';
+import 'package:pm_app/models/response_models/category_model.dart';
 
 class CategoryRepository {
   final DioClient dioClient;

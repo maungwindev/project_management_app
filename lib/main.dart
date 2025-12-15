@@ -1,15 +1,22 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:project_frame/core/const/global_const.dart';
-import 'package:project_frame/core/local_data/shared_prefs.dart';
-import 'package:project_frame/core/router/app_router.dart';
-import 'package:project_frame/controller/theme_controller.dart';
-import 'package:project_frame/injection.dart';
+import 'package:pm_app/core/const/firebase_const.dart';
+import 'package:pm_app/core/const/global_const.dart';
+import 'package:pm_app/core/local_data/shared_prefs.dart';
+import 'package:pm_app/core/router/app_router.dart';
+import 'package:pm_app/controller/theme_controller.dart';
+import 'package:pm_app/injection.dart';
 
 Future<void> main() async {
+
+  
   WidgetsFlutterBinding.ensureInitialized();
+   await Firebase.initializeApp(
+    options: FirebaseConst.firebaseConfig,
+  );
   await EasyLocalization.ensureInitialized();
 
   runApp(

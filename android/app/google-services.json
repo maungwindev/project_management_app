@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "996624453786",
-    "project_id": "khamenkhai",
-    "storage_bucket": "khamenkhai.firebasestorage.app"
+    "project_number": "287735508308",
+    "project_id": "project-management-app-7ace8",
+    "storage_bucket": "project-management-app-7ace8.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:996624453786:android:c8f4c527bd07a7589e4f23",
+        "mobilesdk_app_id": "1:287735508308:android:def3ea397262f93b35acc1",
         "android_client_info": {
-          "package_name": "com.example.project_frame"
+          "package_name": "com.pm_app.production"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBPSB0r8tiQxvVy3FOHKchx6T-pfJekKKI"
+          "current_key": "AIzaSyBt5_iIdXP3JpiBigc_cn1YXWmMPuKKFtk"
         }
       ],
       "services": {
