@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/core/local_data/shared_prefs.dart';
-import 'package:pm_app/models/response_models/user_model.dart';
 import 'package:pm_app/repository/auth_repo.dart';
 import 'package:fpdart/fpdart.dart';
 

@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth auth;
+
+  AuthService({required this.auth});
 
   /// Firebase login replacing API call
   Future<Either<String, User>> login({
@@ -17,7 +19,7 @@ class AuthService {
         return const Left('Email and password are required');
       }
 
-      final userCredential = await _auth.signInWithEmailAndPassword(
+      final userCredential = await auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );

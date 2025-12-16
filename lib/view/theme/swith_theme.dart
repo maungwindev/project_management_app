@@ -27,7 +27,12 @@ class ThemeSwitch extends StatelessWidget {
               child: ScaleTransition(scale: animation, child: child),
             );
           },
-          child: icon,
+          child: Row(
+            children: [
+              icon,
+               Text('Theme Mode'),
+            ],
+          ),
         ),
         tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
         onPressed: () => themeController.toggleTheme(),

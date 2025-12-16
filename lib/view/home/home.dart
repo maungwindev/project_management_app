@@ -5,8 +5,8 @@ import 'package:pm_app/controller/product_controller.dart';
 import 'package:pm_app/core/component/custom_error_widget.dart';
 import 'package:pm_app/core/utils/context_extension.dart';
 import 'package:pm_app/models/response_models/product_model.dart';
+import 'package:pm_app/view/home/project_page.dart';
 import 'package:pm_app/view/theme/swith_theme.dart';
-
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +18,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ProductsController productsController = Get.find();
 
+  int selectedIndex = 0;
+
+  final List<String> menuItems = [
+    'Dashboard',
+    'Projects',
+    'Reports',
+    'Settings',
+  ];
   @override
   void initState() {
     super.initState();
@@ -32,126 +40,153 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "FakeStore",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          "PM APP",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
         centerTitle: false,
         actions: [
-          ThemeSwitch(),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              productsController.testError();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined),
-            onPressed: () {},
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: PopupMenuButton<String>(
+              offset: const Offset(0, 45),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onSelected: (value) {
+                switch (value) {
+                  case 'profile':
+                    // Navigate to profile
+                    break;
+                  case 'theme':
+                    // Toggle theme
+                    break;
+                  case 'logout':
+                    // Logout logic
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_outline, size: 18),
+                      SizedBox(width: 10),
+                      Text('Profile'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'theme',
+                  child: ThemeSwitch(),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, size: 18),
+                      SizedBox(width: 10),
+                      Text('Logout'),
+                    ],
+                  ),
+                ),
+              ],
+              child: Row(
+                children: const [
+                  CircleAvatar(
+                    radius: 16,
+                    child: Icon(Icons.person, size: 18),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'John Doe',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(Icons.keyboard_arrow_down),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: Obx(() {
-        if (productsController.isLoading.value) {
-          return _buildSkeletonLoader();
-        }
+      body: Row(
+        children: [
+          // Left Side UI
 
-        if (productsController.errorMessage.isNotEmpty) {
-          return CustomErrorWidget(
-            errorText: productsController.errorMessage.value,
-            onRetry: () {
-              productsController.getAllProducts();
-            },
-          );
-        }
-
-        return _buildProductGrid(productsController.products);
-      }),
-    );
-  }
-
-  Widget _buildSkeletonLoader() {
-    // Create a list of empty products for skeleton loading
-    final skeletonProducts = List<ProductModel>.generate(
-      6,
-      (index) => ProductModel(
-        id: 0,
-        title: '',
-        price: 0,
-        description: '',
-        category: '',
-        image: '',
-        rating: Rating(rate: 0, count: 0),
-      ),
-    );
-
-    return _buildProductGrid(skeletonProducts);
-  }
-
-  Widget _buildProductGrid(List<ProductModel> products) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = _getCrossAxisCount(constraints.maxWidth);
-        final horizontalPadding = _getHorizontalPadding(constraints.maxWidth);
-        final cardPadding = _getCardPadding(constraints.maxWidth);
-        final aspectRatio = _getAspectRatio(constraints.maxWidth);
-
-        return Container(
-          margin: EdgeInsets.symmetric(
-            vertical: 16,
-            horizontal: horizontalPadding,
-          ),
-          child: CustomRefreshIndicator(
-            onRefresh: () async {
-              await productsController.getAllProducts();
-            },
-            builder: (BuildContext context, Widget child,
-                IndicatorController controller) {
-              return Stack(
-                alignment: Alignment.topCenter,
-                children: <Widget>[
-                  // Your GridView
-                  child,
-
-                  // Refresh indicator
-                  if (controller.isDragging || controller.isArmed)
-                    Positioned(
-                      top: 10,
-                      child: AnimatedBuilder(
-                        animation: controller,
-                        builder: (context, _) {
-                          return Transform.rotate(
-                            angle: controller.value * 2 * 3.14,
-                            child: const Icon(Icons.refresh, size: 28),
-                          );
-                        },
+          Container(
+            width: 220,
+            color: Colors.grey.shade900,
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                ...List.generate(menuItems.length, (index) {
+                  final isSelected = selectedIndex == index;
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = index;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      color: isSelected
+                          ? Colors.blue.withOpacity(0.2)
+                          : Colors.transparent,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.circle,
+                            size: 10,
+                            color: isSelected ? Colors.blue : Colors.grey,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            menuItems[index],
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.grey,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                ],
-              );
-            },
-            child: GridView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: aspectRatio,
-              ),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                return _ProductCard(
-                  product: products[index],
-                  padding: cardPadding,
-                );
-              },
+                  );
+                }),
+              ],
             ),
           ),
-        );
-      },
+
+          // Right Side UI
+          Expanded(
+            child: Container(
+              color: Colors.grey.shade100,
+              child: _buildRightContent(),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildRightContent() {
+    switch (selectedIndex) {
+      case 0:
+        return const DashboardScreen();
+      case 1:
+        return const ProjectScreen();
+      case 2:
+        return const ReportsScreen();
+      case 3:
+        return const SettingsScreen();
+      default:
+        return const SizedBox();
+    }
   }
 
   int _getCrossAxisCount(double screenWidth) {
@@ -187,122 +222,53 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _ProductCard extends StatelessWidget {
-  final ProductModel product;
-  final EdgeInsets padding;
-
-  const _ProductCard({
-    required this.product,
-    required this.padding,
-  });
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: context.borderColor, width: 1),
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: GridView.count(
+        crossAxisCount: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        children: List.generate(6, (index) {
+          return Card(
+            elevation: 2,
+            child: Center(
+              child: Text(
+                'Card ${index + 1}',
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
+          );
+        }),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          // Navigate to product detail page (add Get.to or Navigator)
-        },
-        child: Padding(
-          padding: padding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Product image
-              Expanded(
-                child: Center(
-                  child: product.image.isEmpty
-                      ? Container(
-                          width: double.infinity,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        )
-                      : Image.network(
-                          product.image,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                            Icons.image_not_supported_outlined,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 12),
+    );
+  }
+}
 
-              // Category badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  product.category.isEmpty
-                      ? ''
-                      : product.category.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
 
-              // Product title
-              Text(
-                product.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 8),
 
-              // Price and rating row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    product.price == 0
-                        ? ''
-                        : '\$${product.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, size: 16, color: Colors.amber),
-                      const SizedBox(width: 4),
-                      Text(
-                        product.rating.rate == 0
-                            ? ''
-                            : product.rating.rate.toStringAsFixed(1),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+class ReportsScreen extends StatelessWidget {
+  const ReportsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text('Reports Screen', style: TextStyle(fontSize: 24)),
+    );
+  }
+}
+
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text('Settings Screen', style: TextStyle(fontSize: 24)),
     );
   }
 }
