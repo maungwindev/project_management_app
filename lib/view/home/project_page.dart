@@ -13,6 +13,21 @@ class ProjectScreen extends StatefulWidget {
 class _ProjectScreenState extends State<ProjectScreen> {
   final controller = Get.find<ProjectController>();
 
+  Color _statusColor(ProjectStatus status) {
+  switch (status) {
+    case ProjectStatus.not_started: // "To Do"
+      return const Color(0xFF64748B); // Slate Grey
+    case ProjectStatus.ongoing:    // "In Progress"
+      return const Color(0xFF3B82F6); // Bright Blue
+    case ProjectStatus.completed:
+      return const Color(0xFF10B981); // Emerald Green
+    case ProjectStatus.archived:
+      return const Color(0xFF6366F1); // Indigo
+    default:
+      return Colors.black;
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -30,99 +45,137 @@ class _ProjectScreenState extends State<ProjectScreen> {
         ),
 
         // Project Table
-        Expanded(
-          child: Obx(() {
-            if (controller.isLoading.value) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (controller.errorMessage.isNotEmpty) {
-              return Center(
-                child: Text(
-                  controller.errorMessage.value,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              );
-            }
-
-            if (controller.projectList.isEmpty) {
-              return const Center(child: Text('No projects found'));
-            }
-
-            return SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Card(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                      minWidth: MediaQuery.of(context).size.width),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('ID')),
-                        DataColumn(label: Text('Title')),
-                        DataColumn(label: Text('Description')),
-                        DataColumn(label: Text('Status')),
-                        DataColumn(label: Text('Actions')),
-                      ],
-                      rows: controller.projectList.map((project) {
-                        return DataRow(
-                          cells: [
-                            DataCell(TextButton(
-                              child: Text(project.id),
-                              onPressed: () {
-                                Get.toNamed(
-                                  '/tasks',
-                                  arguments: {'projectId': project.id},
-                                );
-                              },
-                            )),
-                            DataCell(Text(project.title)),
-                            DataCell(Text(project.description)),
-                            DataCell(
-                              DropdownButton<ProjectStatus>(
-                                value: project.status,
-                                underline: const SizedBox(),
-                                items: ProjectStatus.values.map((status) {
-                                  return DropdownMenuItem(
-                                    value: status,
-                                    child: Text(status.name),
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Expanded(
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+          
+              if (controller.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Text(
+                    controller.errorMessage.value,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                );
+              }
+          
+              if (controller.projectList.isEmpty) {
+                return const Center(child: Text('No projects found'));
+              }
+          
+              return SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Card(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                        minWidth: MediaQuery.of(context).size.width),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: DataTable(
+                        columns: const [
+                          
+                          DataColumn(label: Text('Title')),
+                          DataColumn(label: Text('Description')),
+                          DataColumn(label: Text('Status')),
+                          DataColumn(label: Text('Created By')),
+                          DataColumn(label: Text('Members')),
+                          DataColumn(label: Text('Actions')),
+                        ],
+                        rows: controller.projectList.map((project) {
+                          return DataRow(
+                            cells: [
+                              DataCell(TextButton(
+                                child: Text(project.title),
+                                onPressed: () {
+                                  Get.toNamed(
+                                    '/tasks',
+                                    arguments: {
+                                      'projectId': project.id,
+                                      'ownerId': project.ownerId
+                                    },
                                   );
-                                }).toList(),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  project.status = value;
-                                  controller.updatedProjectStatus(
-                                      status: project.status.toString(),
-                                      projectId: project.id);
-                                  // TODO: Call update project in repo
                                 },
-                              ),
-                            ),
-                            DataCell(Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, size: 20),
-                                  onPressed: () =>
-                                      _showEditDialog(context, project),
+                              )),
+                              DataCell(Text(project.description)),
+                              
+                              DataCell(Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  // Using .withOpacity() to get that soft pastel look from the image
+                                  color: _statusColor(project.status)
+                                      .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(
+                                      8), // More rectangular like the image
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, size: 20),
-                                  onPressed: () {
-                                    // TODO: Delete project
-                                  },
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<ProjectStatus>(
+                                    focusColor: Colors.transparent,
+                                    value: project.status,
+                                    // Re-enable and style the icon
+                                    icon: Icon(
+                                      Icons.keyboard_arrow_down,
+                                      color: _statusColor(project.status),
+                                      size: 18,
+                                    ),
+                                    isDense: true, // Makes the button compact
+                                    dropdownColor: Colors.white,
+                                    items: ProjectStatus.values.map((status) {
+                                      return DropdownMenuItem<ProjectStatus>(
+                                        value: status,
+                                        child: Text(
+                                          status.name,
+                                          style: TextStyle(
+                                            // Text color matches the primary status color
+                                            color: _statusColor(status),
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      // Logic remains the same
+                                      project.status = value;
+                                      controller.updatedProjectStatus(
+                                        status: project.status.toString(),
+                                        projectId: project.id,
+                                      );
+                                    },
+                                  ),
                                 ),
-                              ],
-                            )),
-                          ],
-                        );
-                      }).toList(),
+                              )),
+                              DataCell(Text(project.description)),
+                              DataCell(Text(project.members.length.toString())),
+                              DataCell(Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, size: 20),
+                                    onPressed: () =>
+                                        _showEditDialog(context, project),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, size: 20),
+                                    onPressed: () {
+                                      // TODO: Delete project
+                                    },
+                                  ),
+                                ],
+                              )),
+                            ],
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ],
     );
@@ -144,6 +197,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
               controller: titleController,
               decoration: const InputDecoration(labelText: 'Title'),
             ),
+            SizedBox(height: 10,),
             TextField(
               controller: descController,
               decoration: const InputDecoration(labelText: 'Description'),
@@ -152,7 +206,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () =>Get.back(),
             child: const Text('Cancel'),
           ),
           Obx(() => ElevatedButton(
@@ -164,7 +218,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                           description: descController.text,
                         );
 
-                        Navigator.pop(context);
+                       Get.back();
 
                         if (controller.successMessage.isNotEmpty) {
                           Get.snackbar(
@@ -206,6 +260,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
               controller: titleController,
               decoration: const InputDecoration(labelText: 'Title'),
             ),
+            SizedBox(height: 10,),
             TextField(
               controller: descController,
               decoration: const InputDecoration(labelText: 'Description'),
@@ -214,7 +269,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Get.back(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
@@ -223,7 +278,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
               project.description = descController.text;
               controller.update();
 
-              Navigator.pop(context);
+              Get.back();
 
               Get.snackbar(
                 'Success',
@@ -231,7 +286,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 snackPosition: SnackPosition.BOTTOM,
               );
             },
-            child: const Text("Save"),
+            child: const Text("Update"),
           ),
         ],
       ),

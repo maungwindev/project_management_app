@@ -66,11 +66,11 @@ class TaskController extends GetxController {
   }
 
   // ---------------- SUBSCRIBE TASKS ----------------
-  void subscribeTasks({required String projectId}) {
+  void subscribeTasks({required String projectId,required String ownerId}) {
     isLoading.value = true;
     _taskSub?.cancel();
 
-    _taskSub = taskRepository.getTasks(projectId: projectId).listen(
+    _taskSub = taskRepository.getTasks(projectId: projectId,ownerId: ownerId).listen(
       (either) {
         either.fold(
           (error) {

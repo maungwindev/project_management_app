@@ -41,8 +41,9 @@ class TaskRepository {
   // ---------------- READ TASKS (STREAM) ----------------
   Stream<Either<String, List<TaskResponseModel>>> getTasks({
     required String projectId,
+    required String ownerId
   }) {
-    return taskService.getTasks(projectId: projectId);
+    return taskService.getTasks(projectId: projectId,ownerId: ownerId);
   }
 
   // ---------------- UPDATE TASK ----------------

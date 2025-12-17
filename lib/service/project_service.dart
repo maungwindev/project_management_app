@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:pm_app/models/response_models/project_model.dart';
+import 'package:rxdart/rxdart.dart';
 
 class ProjectService {
   final FirebaseAuth auth;
@@ -26,6 +27,7 @@ class ProjectService {
         'title': title,
         'description': description,
         'status': 'not_started',
+        'members': [uid], 
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -39,34 +41,33 @@ class ProjectService {
   }
 
   Stream<Either<String, List<ProjectResponseModel>>> getProjects() {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+  final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    return FirebaseFirestore.instance
-        .collection('projects')
-        .where('ownerId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map<Either<String, List<ProjectResponseModel>>>((snapshot) {
-      try {
-        final projects = snapshot.docs.map((doc) {
-          return ProjectResponseModel.fromFirestore(
-            doc.id,
-            doc.data(),
-          );
-        }).toList();
+  return FirebaseFirestore.instance
+      .collection('projects')
+      .where('members', arrayContains: uid)
+      .orderBy('createdAt', descending: true)
+      .snapshots()
+      .map<Either<String, List<ProjectResponseModel>>>((snapshot) {
+    try {
+      final projects = snapshot.docs.map((doc) {
+        return ProjectResponseModel.fromFirestore(doc.id, doc.data());
+      }).toList();
 
-        logService.logInfo(projects.toList().toString());
-        return Right(projects);
-      } catch (e) {
-        logService.logError(e.toString());
-        return Left('Failed to parse project data: $e');
-      }
-    }).handleError((e) {
+      logService.logInfo(projects.toString());
+      return Right(projects);
+    } catch (e) {
       logService.logError(e.toString());
-      // Handle Firestore stream errors
-      return Left('Firestore error: $e');
-    });
-  }
+      return Left('Failed to parse project data: $e');
+    }
+  }).onErrorReturnWith((error, stackTrace) {
+    // ✅ Use onErrorReturnWith to emit a value instead of changing the stream type
+    logService.logError(error.toString());
+    return Left('Firestore error: $error');
+  });
+}
+
+
 
   Future<Either<String, String>> updateProjectStatus({
     required String projectId,

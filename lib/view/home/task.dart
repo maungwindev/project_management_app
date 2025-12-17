@@ -13,12 +13,14 @@ class TaskScreen extends StatefulWidget {
 class _TaskScreenState extends State<TaskScreen> {
   final TaskController controller = Get.find<TaskController>();
   late final String projectId;
+  late final String ownerId;
 
   @override
   void initState() {
     super.initState();
     projectId = Get.arguments['projectId'];
-    controller.subscribeTasks(projectId: projectId);
+    ownerId = Get.arguments['ownerId'];
+    controller.subscribeTasks(projectId: projectId,ownerId: ownerId);
     controller.subscribeUsers();
   }
 
@@ -67,8 +69,8 @@ class _TaskScreenState extends State<TaskScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(task.title,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(task.description),
             const SizedBox(height: 10),
@@ -128,8 +130,7 @@ class _TaskScreenState extends State<TaskScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.person_add),
-                  onPressed: () =>
-                      _showAddAssigneeDialog(context, task.id),
+                  onPressed: () => _showAddAssigneeDialog(context, task.id,initialAssignees: task.assignees,),
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit),
@@ -245,8 +246,15 @@ class _TaskScreenState extends State<TaskScreen> {
     );
   }
 
-  void _showAddAssigneeDialog(BuildContext context, String taskId) {
-    // controller.selectedAssignees.clear();
+  void _showAddAssigneeDialog(
+    BuildContext context,
+    String taskId, {
+    List<String> initialAssignees = const [],
+  }) {
+    // ✅ reset and initialize properly
+    controller.selectedAssignees
+      ..clear()
+      ..addAll(initialAssignees);
 
     showDialog(
       context: context,
@@ -264,13 +272,13 @@ class _TaskScreenState extends State<TaskScreen> {
               children: controller.allUsers.map((user) {
                 final isSelected =
                     controller.selectedAssignees.contains(user.id);
+
                 return CheckboxListTile(
                   value: isSelected,
                   title: Text(user.name),
                   onChanged: (val) {
                     if (val == true) {
                       controller.selectedAssignees.add(user.id);
-                    
                     } else {
                       controller.selectedAssignees.remove(user.id);
                     }
@@ -281,10 +289,13 @@ class _TaskScreenState extends State<TaskScreen> {
           );
         }),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () async {
-              for (var userId in controller.selectedAssignees) {
+              for (final userId in controller.selectedAssignees) {
                 await controller.addAssignee(
                   projectId: projectId,
                   taskId: taskId,

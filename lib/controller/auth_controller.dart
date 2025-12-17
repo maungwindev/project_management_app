@@ -26,7 +26,7 @@ class AuthController extends GetxController {
 
     final success = result.fold(
       (failure) {
-        _clearUser();
+        clearUser();
         return false;
       },
       (userResponse) {
@@ -112,7 +112,7 @@ class AuthController extends GetxController {
     final userInfo = await sharedPref.getString(key: sharedPref.userInfo);
 
     if (userInfo.isEmpty) {
-      _clearUser();
+      clearUser();
     } else {
       isLoggedIn.value = true;
       userEmail.value = userInfo;
@@ -123,7 +123,7 @@ class AuthController extends GetxController {
   }
 
   /// Clear user
-  void _clearUser() {
+  void clearUser() {
     sharedPref.setString(key: sharedPref.userInfo, value: "");
     userEmail.value = null;
     isLoggedIn.value = false;

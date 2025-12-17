@@ -12,17 +12,20 @@ class UserController extends GetxController {
 
   var isLoading = false.obs;
   var users = <UserResponseModel>[].obs;
+  var currentUserInfo = Rxn<UserResponseModel>();   
   var errorMessage = ''.obs;
 
   var isCreating = false.obs;
   var successMessage = ''.obs;
 
   StreamSubscription<Either<String, List<UserResponseModel>>>? _userSub;
+  StreamSubscription<Either<String, UserResponseModel>>? _currentuserInfo;
 
   @override
   void onInit() {
     super.onInit();
     _subscribeUsers();
+    _subscribeCurrentUser();
   }
 
   void _subscribeUsers() {
@@ -38,6 +41,31 @@ class UserController extends GetxController {
           },
           (data) {
             users.assignAll(data);
+            errorMessage.value = '';
+            isLoading.value = false;
+          },
+        );
+      },
+      onError: (e) {
+        errorMessage.value = e.toString();
+        isLoading.value = false;
+      },
+    );
+  }
+
+  void _subscribeCurrentUser() {
+    isLoading.value = true;
+    _currentuserInfo?.cancel();
+
+    _currentuserInfo = userRepository.getUserInfo().listen(
+      (either) {
+        either.fold(
+          (error) {
+            errorMessage.value = error;
+            isLoading.value = false;
+          },
+          (data) {
+            currentUserInfo.value = data;
             errorMessage.value = '';
             isLoading.value = false;
           },
@@ -78,6 +106,7 @@ class UserController extends GetxController {
   @override
   void onClose() {
     _userSub?.cancel();
+    _currentuserInfo?.cancel();
     super.onClose();
   }
 }

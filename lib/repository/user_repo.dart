@@ -22,6 +22,10 @@ class UserRepository {
     return userService.getUsers();
   }
 
+  Stream<Either<String, UserResponseModel>> getUserInfo() {
+    return userService.getCurrentUser();
+  }
+
   Future<Either<String, String>> updateUser({
     required String userId,
     required String name,

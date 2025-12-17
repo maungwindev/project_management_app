@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:pm_app/models/response_models/response_model.dart';
@@ -18,6 +19,11 @@ class TaskService {
         .doc(projectId)
         .collection('tasks');
   }
+
+ 
+  
+  
+    
 
   // ---------------- CREATE TASK ----------------
   Future<Either<String, String>> createTask({
@@ -52,24 +58,32 @@ class TaskService {
   // ---------------- READ TASKS (STREAM) ----------------
   Stream<Either<String, List<TaskResponseModel>>> getTasks({
   required String projectId,
+  required String ownerId, // pass project ownerId
 }) {
+  final uid = FirebaseAuth.instance.currentUser!.uid;
+
   return firestore
       .collection('projects')
       .doc(projectId)
       .collection('tasks')
       .orderBy('createdAt', descending: true)
       .snapshots()
-      .map((snapshot) {
-        final tasks = snapshot.docs.map((doc) {
-          return TaskResponseModel.fromFirestore(
-            doc.id,
-            doc.data(),
-          );
-        }).toList();
+      .map<Either<String, List<TaskResponseModel>>>((snapshot) {
+        try {
+          final tasks = snapshot.docs.map((doc) {
+            return TaskResponseModel.fromFirestore(doc.id, doc.data());
+          }).where((task) {
+            // User can see task if they are owner OR assigned
+            return uid == ownerId || task.assignees.contains(uid);
+          }).toList();
 
-        return Right(tasks);
-      });
+          return Right(tasks);
+        } catch (e) {
+          return Left('Failed to parse task data: $e');
+        }
+      }).handleError((e) => Left('Firestore error: $e'));
 }
+
 
 
   // ---------------- UPDATE TASK ----------------
@@ -130,10 +144,22 @@ class TaskService {
   required String userId,
 }) async {
   try {
-    await _taskRef(projectId).doc(taskId).update({
-      'assignees': FieldValue.arrayUnion([userId]),
-      'updatedAt': FieldValue.serverTimestamp(),
+    
+    final _projectRef = firestore.collection('projects').doc(projectId);
+
+    await firestore.runTransaction((transaction) async {
+      // add assignee to task
+      transaction.update(_taskRef(projectId).doc(taskId), {
+        'assignees': FieldValue.arrayUnion([userId]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // ensure user is project member
+      transaction.update(_projectRef, {
+        'members': FieldValue.arrayUnion([userId]),
+      });
     });
+
 
     return const Right('Assignee added');
   } catch (e) {
@@ -149,9 +175,20 @@ Future<Either<String, String>> removeAssignee({
   required String userId,
 }) async {
   try {
-    await _taskRef(projectId).doc(taskId).update({
-      'assignees': FieldValue.arrayRemove([userId]),
-      'updatedAt': FieldValue.serverTimestamp(),
+
+    final _projectRef = firestore.collection('projects').doc(projectId);
+
+    await firestore.runTransaction((transaction) async {
+      // add assignee to task
+      transaction.update(_taskRef(projectId).doc(taskId), {
+        'assignees': FieldValue.arrayRemove([userId]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // ensure user is project member
+      transaction.update(_projectRef, {
+        'members': FieldValue.arrayRemove([userId]),
+      });
     });
 
     return const Right('Assignee removed');

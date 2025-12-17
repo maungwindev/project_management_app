@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:pm_app/models/response_models/user_model.dart';
@@ -44,6 +45,23 @@ class UserService {
       logger.logError('Get Users Error: $e');
       return Left<String, List<UserResponseModel>>(
           'Failed to fetch users'); // ✅ specify type explicitly
+    });
+  }
+
+   /// Stream current logged-in user's info
+  Stream<Either<String, UserResponseModel>> getCurrentUser() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    return _userRef.doc(uid).snapshots().map<Either<String, UserResponseModel>>(
+      (snapshot) {
+        if (!snapshot.exists) {
+          return Left('User not found');
+        }
+        final user = UserResponseModel.fromFirestore(snapshot.data()!, snapshot.id);
+        return Right(user);
+      },
+    ).handleError((e) {
+      logger.logError('Get Current User Error: $e');
+      return Left('Failed to fetch user info');
     });
   }
 

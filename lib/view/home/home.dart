@@ -1,10 +1,8 @@
-import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pm_app/controller/auth_controller.dart';
 import 'package:pm_app/controller/product_controller.dart';
-import 'package:pm_app/core/component/custom_error_widget.dart';
-import 'package:pm_app/core/utils/context_extension.dart';
-import 'package:pm_app/models/response_models/product_model.dart';
+import 'package:pm_app/controller/user_controller.dart';
 import 'package:pm_app/view/home/project_page.dart';
 import 'package:pm_app/view/theme/swith_theme.dart';
 
@@ -16,8 +14,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final ProductsController productsController = Get.find();
-
+  
   int selectedIndex = 0;
 
   final List<String> menuItems = [
@@ -26,249 +23,276 @@ class _HomeScreenState extends State<HomeScreen> {
     'Reports',
     'Settings',
   ];
+
   @override
   void initState() {
     super.initState();
-    // Load products on first build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      productsController.getAllProducts();
-    });
+    
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "PM APP",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        elevation: 0,
-        centerTitle: false,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: PopupMenuButton<String>(
-              offset: const Offset(0, 45),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+      body: Row(
+        children: [
+          // Sidebar
+          SidebarWidget(
+            menuItems: menuItems,
+            selectedIndex: selectedIndex,
+            onItemTap: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+          ),
+
+          // Main content
+          Expanded(
+            child: Column(
+              children: [
+                TopNavbar(),
+                Expanded(
+                  child: _buildMainContent(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainContent() {
+    switch (selectedIndex) {
+      case 0:
+        return DashboardContent();
+      case 1:
+        return const ProjectScreen();
+      case 2:
+        return const SizedBox();
+      case 3:
+        return const SizedBox();
+      default:
+        return const SizedBox();
+    }
+  }
+}
+
+// Sidebar Widget
+class SidebarWidget extends StatelessWidget {
+  final List<String> menuItems;
+  final int selectedIndex;
+  final Function(int) onItemTap;
+
+  const SidebarWidget({
+    super.key,
+    required this.menuItems,
+    required this.selectedIndex,
+    required this.onItemTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final List<IconData> iconData = [Icons.dashboard,Icons.folder,Icons.report,Icons.settings];
+    return Container(
+      width: 200,
+      decoration: BoxDecoration(
+         border: Border.all(color: Colors.grey.shade200),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("PM APP", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 30),
+          ...List.generate(menuItems.length, (index) {
+            final isActive = selectedIndex == index;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: InkWell(
+                onTap: () => onItemTap(index),
+                child: Row(
+                  children: [
+                    Icon(iconData[index], size: 20, color: isActive ? Colors.blue : Colors.grey),
+                    const SizedBox(width: 12),
+                    Text(
+                      menuItems[index],
+                      style: TextStyle(
+                        color: isActive ? Colors.black : Colors.grey,
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              onSelected: (value) {
-                switch (value) {
-                  case 'profile':
-                    // Navigate to profile
-                    break;
-                  case 'theme':
-                    // Toggle theme
-                    break;
-                  case 'logout':
-                    // Logout logic
-                    break;
-                }
-              },
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// Top Navbar
+class TopNavbar extends StatelessWidget {
+  const TopNavbar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.find<UserController>();
+    final authController = Get.find<AuthController>();
+
+    return Obx(() {
+      final user = controller.currentUserInfo.value;
+      final displayName = user?.name ?? 'User';
+      final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        margin: const EdgeInsets.only(left: 10),
+        color: Colors.white,
+        child: Row(
+          children: [
+            const Spacer(),
+
+            // Profile circle with first letter
+            PopupMenuButton<int>(
+              offset: const Offset(0, 50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'profile',
-                  child: Row(
+                PopupMenuItem(
+                
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.person_outline, size: 18),
-                      SizedBox(width: 10),
-                      Text('Profile'),
+                      Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(user?.email ?? '', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                 ),
-                const PopupMenuItem(
-                  value: 'theme',
-                  child: ThemeSwitch(),
-                ),
                 const PopupMenuDivider(),
-                const PopupMenuItem(
-                  value: 'logout',
+                PopupMenuItem(
+                  onTap: () {
+                    // Handle logout
+                    authController.clearUser();
+                   Get.offAllNamed('/login');
+                  },
                   child: Row(
-                    children: [
-                      Icon(Icons.logout, size: 18),
-                      SizedBox(width: 10),
-                      Text('Logout'),
+                    children: const [
+                      Icon(Icons.logout, size: 18, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text("Logout"),
                     ],
                   ),
                 ),
               ],
               child: Row(
-                children: const [
+                children: [
                   CircleAvatar(
                     radius: 16,
-                    child: Icon(Icons.person, size: 18),
+                    backgroundColor: Colors.blue,
+                    child: Text(
+                      firstLetter,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  SizedBox(width: 8),
-                  Text(
-                    'John Doe',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down),
+                  const SizedBox(width: 8),
+                  Text(displayName, style: const TextStyle(fontSize: 14)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.keyboard_arrow_down),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-      body: Row(
-        children: [
-          // Left Side UI
-
-          Container(
-            width: 220,
-            color: Colors.grey.shade900,
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                ...List.generate(menuItems.length, (index) {
-                  final isSelected = selectedIndex == index;
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        selectedIndex = index;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      color: isSelected
-                          ? Colors.blue.withOpacity(0.2)
-                          : Colors.transparent,
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.circle,
-                            size: 10,
-                            color: isSelected ? Colors.blue : Colors.grey,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            menuItems[index],
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.grey,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-
-          // Right Side UI
-          Expanded(
-            child: Container(
-              color: Colors.grey.shade100,
-              child: _buildRightContent(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRightContent() {
-    switch (selectedIndex) {
-      case 0:
-        return const DashboardScreen();
-      case 1:
-        return const ProjectScreen();
-      case 2:
-        return const ReportsScreen();
-      case 3:
-        return const SettingsScreen();
-      default:
-        return const SizedBox();
-    }
-  }
-
-  int _getCrossAxisCount(double screenWidth) {
-    if (screenWidth > 1600) return 6;
-    if (screenWidth > 1200) return 5;
-    if (screenWidth > 900) return 4;
-    if (screenWidth > 600) return 3;
-    return 2;
-  }
-
-  double _getHorizontalPadding(double screenWidth) {
-    if (screenWidth > 1600) return 200;
-    if (screenWidth > 1200) return 100;
-    if (screenWidth > 900) return 60;
-    if (screenWidth > 600) return 30;
-    return 16;
-  }
-
-  double _getAspectRatio(double screenWidth) {
-    if (screenWidth > 1600) return 0.85;
-    if (screenWidth > 1200) return 0.8;
-    if (screenWidth > 900) return 0.75;
-    if (screenWidth > 600) return 0.7;
-    return 0.65;
-  }
-
-  EdgeInsets _getCardPadding(double screenWidth) {
-    if (screenWidth > 1600) return const EdgeInsets.all(20);
-    if (screenWidth > 1200) return const EdgeInsets.all(16);
-    if (screenWidth > 900) return const EdgeInsets.all(14);
-    if (screenWidth > 600) return const EdgeInsets.all(12);
-    return const EdgeInsets.all(10);
+          ],
+        ),
+      );
+    });
   }
 }
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
 
+// Dashboard Content (Grid Cards)
+class DashboardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24),
-      child: GridView.count(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        children: List.generate(6, (index) {
-          return Card(
-            elevation: 2,
-            child: Center(
-              child: Text(
-                'Card ${index + 1}',
-                style: const TextStyle(fontSize: 18),
-              ),
+      padding: const EdgeInsets.all(10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Integration", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text(
+            "Reconfigure your workflow and handle repetitive tasks with integration.",
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 400,
+              mainAxisExtent: 200,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
             ),
-          );
-        }),
+            itemCount: 6,
+            itemBuilder: (context, index) => const IntegrationCard(),
+          ),
+        ],
       ),
     );
   }
 }
 
-
-
-class ReportsScreen extends StatelessWidget {
-  const ReportsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Reports Screen', style: TextStyle(fontSize: 24)),
-    );
-  }
-}
-
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+// Card Widget
+class IntegrationCard extends StatelessWidget {
+  const IntegrationCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Settings Screen', style: TextStyle(fontSize: 24)),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Notion + Flows list", style: TextStyle(fontWeight: FontWeight.w600)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
+                child: const Text("Activate", style: TextStyle(color: Colors.green, fontSize: 10)),
+              )
+            ],
+          ),
+          const Spacer(),
+          const Row(
+            children: [
+              Icon(Icons.notes, size: 24),
+              Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Icon(Icons.swap_horiz, color: Colors.grey)),
+              Icon(Icons.grid_view_rounded, size: 24),
+            ],
+          ),
+          const Spacer(),
+          const Row(
+            children: [
+              CircleAvatar(radius: 12, backgroundColor: Colors.blueGrey),
+              SizedBox(width: 8),
+              Text("by Group", style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Spacer(),
+              Icon(Icons.more_horiz, color: Colors.grey),
+            ],
+          )
+        ],
+      ),
     );
   }
 }
