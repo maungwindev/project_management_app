@@ -7,7 +7,7 @@ class TaskResponseModel {
   final String id;
   final String title;
   final String description;
-  final TaskStatus status;
+   TaskStatus status;
   final TaskPriority priority;
   final List<String> assignees;
   final DateTime? dueDate;
@@ -34,7 +34,10 @@ class TaskResponseModel {
       id: id,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
-      status: _parseStatus(data['status']),
+      status: TaskStatus.values.firstWhere(
+        (e) => e.toString() == data['status'],
+        orElse: () => TaskStatus.todo,
+      ),
       priority: _parsePriority(data['priority']),
       assignees: List<String>.from(data['assignees'] ?? []),
       dueDate: (data['dueDate'] as Timestamp?)?.toDate(),

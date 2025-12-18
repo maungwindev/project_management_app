@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/auth_controller.dart';
-import 'package:pm_app/controller/product_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
 import 'package:pm_app/view/home/project_page.dart';
-import 'package:pm_app/view/theme/swith_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

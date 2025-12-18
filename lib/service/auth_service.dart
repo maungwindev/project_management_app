@@ -42,4 +42,40 @@ class AuthService {
       return const Left('Unexpected error occurred');
     }
   }
+
+// For Register
+  Future<Either<String, User>> register({
+    required Map<String, dynamic> requestBody,
+  }) async {
+    try {
+      final email = requestBody['email'] as String?;
+      final password = requestBody['password'] as String?;
+
+      if (email == null || password == null) {
+        return const Left('Email and password are required');
+      }
+
+      final userCredential = await auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
+      );
+
+      if (userCredential.user != null) {
+        return Right(userCredential.user!);
+      } else {
+        return const Left('Register failed');
+      }
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print('FirebaseAuthException code: ${e.code}');
+        print('Message: ${e.message}');
+      }
+      return Left(e.message ?? 'Firebase register failed');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Unexpected error: $e');
+      }
+      return const Left('Unexpected error occurred');
+    }
+  }
 }

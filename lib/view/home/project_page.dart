@@ -138,6 +138,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                                       );
                                     }).toList(),
                                     onChanged: (value) {
+                                      // print("value:${value}");
                                       if (value == null) return;
                                       // Logic remains the same
                                       project.status = value;

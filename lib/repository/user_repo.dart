@@ -1,5 +1,4 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:pm_app/models/response_models/response_model.dart';
 import 'package:pm_app/models/response_models/user_model.dart';
 import 'package:pm_app/service/user_service.dart';
 import 'package:pm_app/core/utils/custom_logger.dart';
@@ -10,11 +9,12 @@ class UserRepository {
 
   UserRepository({required this.userService, required this.logger});
 
-  Future<Either<String, String>> createUser({
-    required String name,
-    required String email,
-  }) async {
-    final result = await userService.createUser(name: name, email: email);
+  Future<Either<String, String>> createUser(
+      {required String name,
+      required String email,
+      required String password}) async {
+    final result = await userService.createUser(
+        requestBody: {'name': name, 'email': email, 'password': password});
     return result.fold((l) => Left(l), (r) => Right(r));
   }
 
@@ -31,7 +31,8 @@ class UserRepository {
     required String name,
     required String email,
   }) async {
-    final result = await userService.updateUser(userId: userId, name: name, email: email);
+    final result =
+        await userService.updateUser(userId: userId, name: name, email: email);
     return result.fold((l) => Left(l), (r) => Right(r));
   }
 

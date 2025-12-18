@@ -16,91 +16,115 @@ import 'package:pm_app/service/task_service.dart';
 import 'package:pm_app/service/user_service.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:pm_app/controller/auth_controller.dart';
-import 'package:pm_app/controller/category_controller.dart';
 import 'package:pm_app/controller/connection_controller.dart';
-import 'package:pm_app/controller/product_controller.dart';
 import 'package:pm_app/controller/theme_controller.dart';
 import 'package:pm_app/core/const/api_const.dart';
 import 'package:pm_app/core/local_data/shared_prefs.dart';
 import 'package:pm_app/core/network/dio_client.dart';
 import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:pm_app/repository/auth_repo.dart';
-import 'package:pm_app/repository/categories_repo.dart';
-import 'package:pm_app/repository/products_repo.dart';
-
 class AppBindings extends Bindings {
   @override
   void dependencies() {
-    // Shared Prefs
-    Get.lazyPut(() => SharedPref());
 
-    // Logger
-    Get.lazyPut(() => Logger());
+    // 🔐 Firebase (GLOBAL)
+    Get.put<FirebaseAuth>(FirebaseAuth.instance, permanent: true);
+    Get.put<FirebaseFirestore>(FirebaseFirestore.instance, permanent: true);
 
-    // Custom Logger
-    Get.lazyPut(() => CustomLogger(logger: Get.find()));
+    // 🔐 Core Utils
+    Get.put<Logger>(Logger(), permanent: true);
+    Get.put<CustomLogger>(
+      CustomLogger(logger: Get.find()),
+      permanent: true,
+    );
+    Get.put<SharedPref>(SharedPref(), permanent: true);
 
-    // Dio
-    Get.lazyPut<Dio>(() {
-      final dio = Dio(
+    // 🔐 Auth Core
+    Get.put<AuthService>(
+      AuthService(auth: Get.find()),
+      permanent: true,
+    );
+
+    // 🌐 Dio
+    Get.put<Dio>(
+      Dio(
         BaseOptions(
           baseUrl: ApiConst.BASE_URL_DEV,
           headers: {'Content-Type': 'application/json'},
         ),
+      ),
+      permanent: true,
+    );
+
+    if (kDebugMode) {
+      Get.find<Dio>().interceptors.add(
+        PrettyDioLogger(
+          requestHeader: true,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: true,
+          error: true,
+          compact: true,
+          maxWidth: 90,
+        ),
       );
+    }
 
-      if (kDebugMode) {
-        dio.interceptors.add(
-          PrettyDioLogger(
-            requestHeader: true,
-            requestBody: true,
-            responseBody: true,
-            responseHeader: true,
-            error: true,
-            compact: true,
-            maxWidth: 90,
-          ),
-        );
-      }
+    // 🌐 Dio Client
+    Get.put(
+      DioClient(sharedPref: Get.find(), dio: Get.find()),
+      permanent: true,
+    );
 
-      return dio;
-    });
+    // 📦 Services
+    Get.lazyPut(
+      () => UserService(
+        firestore: Get.find(),
+        authService: Get.find(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => ProjectService(
+        auth: Get.find(),
+        logService: Get.find(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut(
+      () => TaskService(
+        firestore: Get.find(),
+        logger: Get.find(),
+      ),
+      fenix: true,
+    );
 
-    // DioClient
-    Get.lazyPut(() => DioClient(sharedPref: Get.find(), dio: Get.find()));
+    // 📦 Repositories
+    Get.lazyPut(
+      () => AuthRepository(
+        authService: Get.find(),
+        logService: Get.find(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut(() => UserRepository(userService: Get.find(), logger: Get.find()), fenix: true);
+    Get.lazyPut(() => ProjectRepository(projectService: Get.find(), logger: Get.find()), fenix: true);
+    Get.lazyPut(() => TaskRepository(taskService: Get.find(), logger: Get.find()), fenix: true);
 
-    // Repositories
-    Get.lazyPut(() => AuthRepository(authService: Get.find(), logService: Get.find()));
-    Get.lazyPut(() => ProductsRepo(dioClient: Get.find(), logger: Get.find()));
-    Get.lazyPut(() => CategoryRepository(dioClient: Get.find(), logger: Get.find()));
-    Get.lazyPut(() => ProjectRepository(projectService: Get.find(), logger: Get.find()));
-    Get.lazyPut(() => TaskRepository(taskService: Get.find(), logger: Get.find()));
-    Get.lazyPut(() => UserRepository(userService: Get.find(), logger: Get.find()));
-
-    // Controllers / Cubits (can migrate them to GetX Controllers later)
-    Get.lazyPut(() => InternetConnectionController());
-    Get.lazyPut(() => ThemeController(sharedPref: Get.find()));
-    Get.lazyPut(() => ProductsController(productRepo: Get.find()));
-    Get.lazyPut(() => CategoryController(categoryRepo: Get.find()));
-    Get.lazyPut(() => ProjectController(projectRepository: Get.find()));
-    Get.lazyPut(() => TaskController(taskRepository: Get.find(),userRepository: Get.find()));
-    Get.lazyPut(() => UserController(userRepository: Get.find()));
+    // 🎮 Controllers
     Get.lazyPut(() => AuthController(
-          authRepository: Get.find(),
-          sharedPref: Get.find(),
-        ));
-    Get.lazyPut(()=>AuthService(auth: Get.find()));
-    Get.lazyPut(()=>ProjectService(auth: Get.find(),logService: Get.find()));
-    Get.lazyPut(()=>TaskService(firestore: Get.find(),logger: Get.find()));
-    Get.lazyPut(()=>UserService(firestore: Get.find(),logger: Get.find()));
+      authRepository: Get.find(),
+      sharedPref: Get.find(),
+    ), fenix: true);
 
-    // Firebase Instance
-    Get.lazyPut<FirebaseAuth>((){
-      FirebaseAuth auth  = FirebaseAuth.instance;
-      return auth;
-    });
+    Get.lazyPut(() => UserController(userRepository: Get.find()), fenix: true);
+    Get.lazyPut(() => ProjectController(projectRepository: Get.find()), fenix: true);
+    Get.lazyPut(() => TaskController(
+      taskRepository: Get.find(),
+      userRepository: Get.find(),
+    ), fenix: true);
 
-    Get.lazyPut(() => FirebaseFirestore.instance);
-
+    Get.lazyPut(() => ThemeController(sharedPref: Get.find()), fenix: true);
+    Get.lazyPut(() => InternetConnectionController(), fenix: true);
   }
 }

@@ -12,10 +12,11 @@ class UserController extends GetxController {
 
   var isLoading = false.obs;
   var users = <UserResponseModel>[].obs;
-  var currentUserInfo = Rxn<UserResponseModel>();   
+  var currentUserInfo = Rxn<UserResponseModel>();
   var errorMessage = ''.obs;
 
   var isCreating = false.obs;
+  var isRegister = false.obs;
   var successMessage = ''.obs;
 
   StreamSubscription<Either<String, List<UserResponseModel>>>? _userSub;
@@ -78,15 +79,25 @@ class UserController extends GetxController {
     );
   }
 
-  Future<void> createUser({required String name, required String email}) async {
-    isCreating.value = true;
+  Future<bool> createUser(
+      {required String name,
+      required String email,
+      required String password}) async {
+    isRegister.value = true;
     successMessage.value = '';
     errorMessage.value = '';
 
-    final result = await userRepository.createUser(name: name, email: email);
-    result.fold((l) => errorMessage.value = l, (r) => successMessage.value = r);
+    final result = await userRepository.createUser(
+        name: name, email: email, password: password);
 
-    isCreating.value = false;
+    return await result.fold((l) {
+      errorMessage.value = l;
+      return false;
+    }, (r) {
+      successMessage.value = r;
+      isRegister.value = false;
+      return true;
+    });
   }
 
   Future<void> updateUser({
@@ -94,7 +105,8 @@ class UserController extends GetxController {
     required String name,
     required String email,
   }) async {
-    final result = await userRepository.updateUser(userId: userId, name: name, email: email);
+    final result = await userRepository.updateUser(
+        userId: userId, name: name, email: email);
     result.fold((l) => errorMessage.value = l, (r) => successMessage.value = r);
   }
 
