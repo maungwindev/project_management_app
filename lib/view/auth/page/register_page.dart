@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/user_controller.dart';
+import 'package:pm_app/core/component/custom_Inputdecoration.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -68,17 +69,26 @@ class _RegisterPageState extends State<RegisterPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Sign Up',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                    'Welcome to PM',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                   const SizedBox(height: 8),
+                  // Subtitle
+                  Text(
+                    'Get started - it\'s free. No credit card needed.',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 32),
+                  buildLabel('Name '),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: nameController,
                     keyboardType: TextInputType.text,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
+                    decoration: buildInputDecoration(
+                      hintText: 'Enter Your Name',prefixIcon: Icons.person
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -88,16 +98,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+
+                  const SizedBox(height: 18),
+                  buildLabel('Email '),
+                  const SizedBox(height: 8),
                   // Email TextFormField
                   TextFormField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
-                    ),
+                    decoration: buildInputDecoration(hintText: 'Enter Your Email', prefixIcon: Icons.email),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
@@ -110,16 +119,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
+                  buildLabel('Password '),
+                  const SizedBox(height: 8),
                   // Password TextFormField
                   TextFormField(
                     controller: passwordController,
                     obscureText: !isObscured,
-                    decoration: InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock),
-                        suffixIcon: IconButton(
+                    decoration: buildInputDecoration(
+                      hintText: 'Enter Your Password', prefixIcon: Icons.lock,suffixIcon: IconButton(
                             onPressed: () {
                               setState(() {
                                 isObscured = !isObscured;
@@ -138,17 +146,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
+                  buildLabel('Confirm Password '),
+                  const SizedBox(height: 8),
                   // Password TextFormField
                   TextFormField(
                     controller: confirmpasswordController,
                     obscureText: !isObscured,
-                    decoration: InputDecoration(
-                      labelText: 'Confirm Password',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.lock),
-                      // suffixIcon: isObscured? Icon(Icons.visibility):Icon(Icons.visibility_off)
-                    ),
+                    decoration: buildInputDecoration(hintText: 'Re-Enter Your Password', prefixIcon: Icons.lock),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
@@ -166,7 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   Obx(() {
                     return SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 40,
                       child: ElevatedButton(
                         onPressed:
                             userController.isRegister.value ? null : register,
@@ -180,22 +185,29 @@ class _RegisterPageState extends State<RegisterPage> {
                   }),
 
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Text("Already have an account yet?"),
-                      TextButton(
-                        onPressed: () {
-                          Get.offNamed('/login');
-
-                        },
-                        child: const Text('Sign In'),
-                        style: TextButton.styleFrom(
-                          textStyle: TextStyle(
-                            fontWeight: FontWeight.bold
-                          )
+                  SizedBox(
+                    width: double.infinity,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("Already have an account yet?",style: TextStyle(
+                            fontSize: 16,
+                          ),),
+                        TextButton(
+                          onPressed: () {
+                            Get.offNamed('/login');
+                    
+                          },
+                          child: const Text('Sign In'),
+                          style: TextButton.styleFrom(
+                            textStyle: TextStyle(
+                              fontWeight: FontWeight.bold,fontSize: 16
+                            )
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   // TextButton(
                   //   onPressed: () {},

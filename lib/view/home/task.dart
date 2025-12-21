@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/task_controller.dart';
 import 'package:pm_app/models/response_models/response_model.dart';
+import 'package:pm_app/view/home/project_card.dart';
+import 'package:pm_app/view/home/task_card.dart';
 
 class TaskScreen extends StatefulWidget {
   const TaskScreen({super.key});
@@ -27,13 +29,13 @@ class _TaskScreenState extends State<TaskScreen> {
   Color _statusColor(TaskStatus status) {
     switch (status) {
       case TaskStatus.todo:
-        return const Color(0xFF3B82F6); // Blue
+        return const Color(0xFF3B82F6);
       case TaskStatus.inProgress:
-        return const Color.fromARGB(255, 255, 227, 70); // Yellow
+        return const Color(0xFFFACC15);
       case TaskStatus.done:
-        return const Color.fromARGB(255, 2, 154, 68); // Green
+        return const Color(0xFF10B981);
       default:
-        return Colors.black;
+        return Colors.grey;
     }
   }
 
@@ -42,14 +44,14 @@ class _TaskScreenState extends State<TaskScreen> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tasks'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showCreateTaskDialog(context),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Tasks')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Get.toNamed('/create-task', arguments: {
+            'projectId': projectId,
+          });
+        },
+        child: const Icon(Icons.add),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -66,132 +68,109 @@ class _TaskScreenState extends State<TaskScreen> {
 
         return isMobile
             ? ListView.builder(
+                padding: const EdgeInsets.all(10),
                 itemCount: controller.taskList.length,
                 itemBuilder: (_, index) {
                   final task = controller.taskList[index];
-                  return _taskCard(task);
+                  return TaskCard(
+                        priority: "HIGH PRIORITY",
+                        priorityBg: Color(0xFF451A1A),
+                        priorityText: Color(0xFFF87171),
+                        title: task.title,
+                        description: task.description,
+                        status: task.status.value.toUpperCase(),
+                        statusColor: Colors.blue,
+                        avatarCount: task.assignees.length,
+                        taskModel: task,
+                  );
                 },
               )
-            : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: const [
-                    DataColumn(label: Text('Task Name')),
-                    DataColumn(label: Text('Description')),
-                    DataColumn(label: Text('Priority')),
-                    DataColumn(label: Text('Assignees')),
-                    DataColumn(label: Text('Due Date')),
-                    DataColumn(label: Text("Status")),
-                    DataColumn(label: Text('Actions')),
-                  ],
-                  rows: controller.taskList.map((task) {
-                    return DataRow(
-                      cells: [
-                        DataCell(Text(task.title)),
-                        DataCell(Text(task.description)),
-                        DataCell(Text(task.priority.name)),
-                        DataCell(assigneeRow(task)),
-                        DataCell(Text("${task.dueDate}")),
-                        DataCell(Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _statusColor(task.status).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<TaskStatus>(
-                              focusColor: Colors.transparent,
-                              value: task.status,
-                              icon: Icon(
-                                Icons.keyboard_arrow_down,
-                                color: _statusColor(task.status),
-                                size: 18,
-                              ),
-                              isDense: true,
-                              dropdownColor: Colors.white,
-                              items: TaskStatus.values.map((status) {
-                                return DropdownMenuItem<TaskStatus>(
-                                  value: status,
-                                  child: Text(
-                                    status.name,
-                                    style: TextStyle(
-                                      color: _statusColor(status),
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                task.status = value;
-                                controller.updateTaskStatus(
-                                  taskId: task.id,
-                                  status: task.status.toString(),
-                                  projectId: projectId,
-                                );
-                              },
-                            ),
-                          ),
-                        )),
-                        DataCell(Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () =>
-                                  _showEditTaskDialog(context, task),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
-                                controller.deleteTask(
-                                  projectId: projectId,
-                                  taskId: task.id,
-                                );
-                              },
-                            ),
-                          ],
-                        )),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              );
+            : _desktopTable();
       }),
     );
   }
 
-  // ---------------- MOBILE CARD ----------------
+  // ================= MOBILE CARD =================
+
   Widget _taskCard(TaskResponseModel task) {
-    return Card(
-      margin: const EdgeInsets.all(10),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white, // Card color
+         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(task.title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(task.description),
-            const SizedBox(height: 4),
-            Text('Priority: ${task.priority}'),
+            // TITLE + STATUS
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    task.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                _statusBadge(task),
+              ],
+            ),
+
             const SizedBox(height: 6),
+
+            // DESCRIPTION
+            Text(
+              task.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // META
+            Row(
+              children: [
+                _infoChip(
+                  label: task.priority.name.toUpperCase(),
+                  bg: Colors.red.shade50,
+                  textColor: Colors.red,
+                ),
+                const SizedBox(width: 8),
+                _infoChip(
+                  label: 'Due ${task.dueDate}',
+                  bg: Colors.blue.shade50,
+                  textColor: Colors.blue,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // ASSIGNEES
             assigneeRow(task),
-            const SizedBox(height: 6),
-            Text('Due: ${task.dueDate}'),
-            const SizedBox(height: 6),
+
+            const SizedBox(height: 8),
+
+            // ACTIONS
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.edit),
+                  icon: const Icon(Icons.edit, size: 20),
                   onPressed: () => _showEditTaskDialog(context, task),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
+                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
                   onPressed: () {
                     controller.deleteTask(
                       projectId: projectId,
@@ -207,141 +186,147 @@ class _TaskScreenState extends State<TaskScreen> {
     );
   }
 
-  // ---------------- ASSIGNEE ROW ----------------
-  Widget assigneeRow(TaskResponseModel task) {
+  // ================= STATUS BADGE =================
 
-
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            ...task.assignees.map((userId) => Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(userId, style: const TextStyle(fontSize: 14)),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: () {
-                            controller.removeAssignee(
-                              projectId: projectId,
-                              taskId: task.id,
-                              userId: userId,
-                            );
-                          },
-                          child: const Icon(Icons.cancel,
-                              size: 18, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ),
-                )),
-            GestureDetector(
-              onTap: () => _showAddAssigneeDialog(context, task.id),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.blue,
-                child: const Icon(Icons.add, color: Colors.white, size: 20),
-              ),
-            ),
-          ],
+  Widget _statusBadge(TaskResponseModel task) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _statusColor(task.status).withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        task.status.name.toUpperCase(),
+        style: TextStyle(
+          color: _statusColor(task.status),
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
         ),
-      );
-    
-  }
-
-  // ---------------- CREATE TASK ----------------
-  void _showCreateTaskDialog(BuildContext context) {
-    final titleCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-    final selectedPriority = RxString('Low');
-    final selectedDueDate = Rx<DateTime>(DateTime.now());
-
-    showDialog(
-      context: context,
-      builder: (_) => Obx(() => AlertDialog(
-            title: const Text('Create Task'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: descCtrl,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  value: selectedPriority.value,
-                  decoration: const InputDecoration(labelText: 'Priority'),
-                  items: const [
-                    DropdownMenuItem(value: 'Low', child: Text('Low')),
-                    DropdownMenuItem(value: 'Medium', child: Text('Medium')),
-                    DropdownMenuItem(value: 'High', child: Text('High')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) selectedPriority.value = val;
-                  },
-                ),
-                const SizedBox(height: 10),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDueDate.value,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) selectedDueDate.value = picked;
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Due Date'),
-                    child: Text(
-                        '${selectedDueDate.value.day}/${selectedDueDate.value.month}/${selectedDueDate.value.year}'),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Get.back(), child: const Text('Cancel')),
-              ElevatedButton(
-                onPressed: controller.isCreating.value
-                    ? null
-                    : () async {
-                        await controller.createTask(
-                          projectId: projectId,
-                          title: titleCtrl.text,
-                          description: descCtrl.text,
-                          status: 'todo',
-                          priority: selectedPriority.value,
-                          assignees: [],
-                          dueDate: selectedDueDate.value,
-                        );
-                        Get.back();
-                      },
-                child: controller.isCreating.value
-                    ? const CircularProgressIndicator()
-                    : const Text('Create'),
-              ),
-            ],
-          )),
+      ),
     );
   }
 
-  // ---------------- EDIT TASK ----------------
+  // ================= INFO CHIP =================
+
+  Widget _infoChip({
+    required String label,
+    required Color bg,
+    required Color textColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
+  // ================= ASSIGNEES =================
+
+  Widget assigneeRow(TaskResponseModel task) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          ...task.assignees.map((userId) => Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.blueGrey,
+                      child: const Icon(Icons.person,
+                          size: 16, color: Colors.white),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        controller.removeAssignee(
+                          projectId: projectId,
+                          taskId: task.id,
+                          userId: userId,
+                        );
+                      },
+                      child: const CircleAvatar(
+                        radius: 7,
+                        backgroundColor: Colors.red,
+                        child: Icon(Icons.close,
+                            size: 9, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+          GestureDetector(
+            onTap: () => _showAddAssigneeDialog(context, task.id),
+            child: const CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.blue,
+              child: Icon(Icons.add, color: Colors.white, size: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ================= DESKTOP TABLE (UNCHANGED) =================
+
+  Widget _desktopTable() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: const [
+          DataColumn(label: Text('Task Name')),
+          DataColumn(label: Text('Description')),
+          DataColumn(label: Text('Priority')),
+          DataColumn(label: Text('Assignees')),
+          DataColumn(label: Text('Due Date')),
+          DataColumn(label: Text('Status')),
+          DataColumn(label: Text('Actions')),
+        ],
+        rows: controller.taskList.map((task) {
+          return DataRow(cells: [
+            DataCell(Text(task.title)),
+            DataCell(Text(task.description)),
+            DataCell(Text(task.priority.name)),
+            DataCell(assigneeRow(task)),
+            DataCell(Text('${task.dueDate}')),
+            DataCell(_statusBadge(task)),
+            DataCell(Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => _showEditTaskDialog(context, task),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    controller.deleteTask(
+                      projectId: projectId,
+                      taskId: task.id,
+                    );
+                  },
+                ),
+              ],
+            )),
+          ]);
+        }).toList(),
+      ),
+    );
+  }
+
+  // ================= EDIT TASK =================
+
   void _showEditTaskDialog(BuildContext context, TaskResponseModel task) {
     final titleCtrl = TextEditingController(text: task.title);
     final descCtrl = TextEditingController(text: task.description);
@@ -378,49 +363,37 @@ class _TaskScreenState extends State<TaskScreen> {
     );
   }
 
-  // ---------------- ADD ASSIGNEE ----------------
-  void _showAddAssigneeDialog(
-    BuildContext context,
-    String taskId, {
-    List<String> initialAssignees = const [],
-  }) {
+  // ================= ADD ASSIGNEE =================
+
+  void _showAddAssigneeDialog(BuildContext context, String taskId) {
+    controller.selectedAssignees.clear();
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Select Assignees'),
         content: Obx(() {
-          if (controller.allUsers.isEmpty) {
-            return const Center(child: Text('No users found'));
-          }
-
-          return SizedBox(
-            width: double.maxFinite,
-            child: ListView(
-              shrinkWrap: true,
-              children: controller.allUsers.map((user) {
-                final isSelected =
-                    controller.selectedAssignees.contains(user.id);
-
-                return CheckboxListTile(
-                  value: isSelected,
-                  title: Text(user.name),
-                  onChanged: (val) {
-                    if (val == true) {
-                      controller.selectedAssignees.add(user.id);
-                    } else {
-                      controller.selectedAssignees.remove(user.id);
-                    }
-                  },
-                );
-              }).toList(),
-            ),
+          return ListView(
+            shrinkWrap: true,
+            children: controller.allUsers.map((user) {
+              final isSelected =
+                  controller.selectedAssignees.contains(user.id);
+              return CheckboxListTile(
+                value: isSelected,
+                title: Text(user.name),
+                onChanged: (val) {
+                  if (val == true) {
+                    controller.selectedAssignees.add(user.id);
+                  } else {
+                    controller.selectedAssignees.remove(user.id);
+                  }
+                },
+              );
+            }).toList(),
           );
         }),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
               for (final userId in controller.selectedAssignees) {
@@ -438,4 +411,6 @@ class _TaskScreenState extends State<TaskScreen> {
       ),
     );
   }
+
+  
 }

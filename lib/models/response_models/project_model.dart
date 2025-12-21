@@ -1,5 +1,18 @@
 enum ProjectStatus { not_started, ongoing, completed, archived }
 
+extension ProjectStatusX on ProjectStatus {
+  /// save to Firestore
+  String get value => name;
+
+  /// read from Firestore
+  static ProjectStatus fromValue(String? value) {
+    return ProjectStatus.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => ProjectStatus.not_started,
+    );
+  }
+}
+
 class ProjectResponseModel {
   final String id;
   String title;
@@ -26,10 +39,7 @@ class ProjectResponseModel {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       ownerId: json['ownerId'] ?? '',
-      status: ProjectStatus.values.firstWhere(
-        (e) => e.toString() == json['status'],
-        orElse: () => ProjectStatus.not_started,
-      ),
+      status: ProjectStatusX.fromValue(json['status']),
       members: List<String>.from(json['members'] ?? []), // ✅ safe
     );
   }
@@ -38,7 +48,7 @@ class ProjectResponseModel {
     return {
       'title': title,
       'description': description,
-      'status': status.toString(),
+      'status': status.value,
       'members': members, // 🔥 REQUIRED
       'ownerId':ownerId
     };

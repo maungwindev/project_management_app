@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/auth_controller.dart';
+import 'package:pm_app/core/component/custom_Inputdecoration.dart';
+import 'package:pm_app/core/component/loading_widget.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,15 +18,12 @@ class _LoginPageState extends State<LoginPage> {
   final AuthController authController = Get.find<AuthController>();
 
   bool isLoading = false;
-  bool _isSignIn = true;
-  bool _isPasswordHidden = true;
+
+  bool isObscured = true;
 
   // Color Palette from the image
   final Color _backgroundColor = const Color(0xFF12171D);
-  final Color _cardColor = Colors.white;
-  final Color _inputFillColor = const Color(0xFF212730);
   final Color _inputBorderColor = const Color(0xFF2D3440);
-  final Color _primaryBlue = const Color(0xFF007AFF);
   final Color _textGrey = const Color(0xFF8F9BB3);
 
   // Example login function
@@ -65,19 +64,17 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 500),
-         
+            constraints: const BoxConstraints(maxWidth: 400),
             child: Form(
               key: _formKey,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Title
-                   Text(
-                    'Welcome Back',
+                  Text(
+                    'Log in to your account ',
                     style: TextStyle(
-                      color: _backgroundColor,
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -86,41 +83,21 @@ class _LoginPageState extends State<LoginPage> {
                   Text(
                     'Manage better. Log in to your workspace.',
                     style: TextStyle(
-                      color:_textGrey,
+                      color: _textGrey,
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  // Sign In / Sign Up Toggle
-                  Container(
-                    padding: const EdgeInsets.all(4.0),
-                    decoration: BoxDecoration(
-                      color: _inputFillColor,
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: Row(
-                      children: [
-                        _buildToggleButton(
-                          text: 'Sign In',
-                          isSelected: _isSignIn,
-                          onTap: () => setState(() => _isSignIn = true),
-                        ),
-                        _buildToggleButton(
-                          text: 'Sign Up',
-                          isSelected: !_isSignIn,
-                          onTap: () => setState(() => _isSignIn = false),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  _buildLabel('Email Address'),
-                const SizedBox(height: 8),
+
+                  const SizedBox(height: 18),
+                  buildLabel('Email '),
+                  const SizedBox(height: 8),
                   // Email TextFormField
                   TextFormField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: _buildInputDecoration(hintText: "Enter Your Email",prefixIcon: Icons.mail),
+                    decoration: buildInputDecoration(
+                        hintText: "Enter your work email address",
+                        prefixIcon: Icons.mail),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
@@ -133,14 +110,22 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
-                  _buildLabel('Password'),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 18),
+                  buildLabel('Password'),
+                  const SizedBox(height: 8),
                   // Password TextFormField
                   TextFormField(
                     controller: passwordController,
-                    obscureText: true,
-                    decoration: _buildInputDecoration(hintText:"Enter Your Password",prefixIcon: Icons.password,suffixIcon: Icon(Icons.visibility_off)),
+                    obscureText: isObscured,
+                    decoration: buildInputDecoration(
+                        hintText: "Enter Your Password",
+                        prefixIcon: Icons.lock,
+                        suffixIcon: GestureDetector(onTap: (){
+                          setState(() {
+                            isObscured = !isObscured;
+                          });
+                        },child: isObscured?Icon(Icons.visibility_off) : Icon(Icons.visibility),)
+                        ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
@@ -151,7 +136,7 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
                   // Obx(() {
                   //   return SizedBox(
                   //     width: double.infinity,
@@ -168,55 +153,68 @@ class _LoginPageState extends State<LoginPage> {
                   //   );
                   // }),
 
-                  Obx((){
-                    return  SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                  onPressed:
+                  Obx(() {
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed:
                             authController.isLoading.value ? null : login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _backgroundColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.0),
+                        style: ElevatedButton.styleFrom(
+                          // backgroundColor: _backgroundColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: authController.isLoading.value
+                            ? LoadingWidget()
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Log In',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  // SizedBox(width: 8),
+                                  // Icon(Icons.arrow_forward_rounded),
+                                ],
+                              ),
                       ),
-                      elevation: 0,
-                    ),
-                    child: authController.isLoading.value
-                            ? const CircularProgressIndicator(
-                                color: Colors.white): const Row(
+                    );
+                  }),
+
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          'SignIn',
+                          "Don't have an account yet?",
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
-                        // SizedBox(width: 8),
-                        // Icon(Icons.arrow_forward_rounded),
+                        TextButton(
+                          onPressed: () {
+                            Get.offNamed('/register');
+                          },
+                          child: const Text('Sign Up'),
+                          style: TextButton.styleFrom(
+                              textStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          )),
+                        ),
                       ],
                     ),
                   ),
-                );
-                  }),
-
-                  const SizedBox(height: 16),
-                  // Row(
-                  //   children: [
-                  //     Text("Don't have an account yet?"),
-                  //     TextButton(
-                  //       onPressed: () {
-                  //         Get.offNamed('/register');
-                  //       },
-                  //       child: const Text('Sign Up'),
-                  //       style: TextButton.styleFrom(
-                  //           textStyle: TextStyle(fontWeight: FontWeight.bold)),
-                  //     ),
-                  //   ],
-                  // ),
                 ],
               ),
             ),
@@ -226,77 +224,35 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Helper widget for labels
-  Widget _buildLabel(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style:  TextStyle(
-          color: _backgroundColor,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  // Helper for input decoration
-  InputDecoration _buildInputDecoration({
-    required String hintText,
-    required IconData prefixIcon,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      filled: true,
-      fillColor: Colors.white,
-      hintText: hintText,
-      hintStyle: TextStyle(color: _textGrey),
-      prefixIcon: Icon(prefixIcon, color: _textGrey),
-      suffixIcon: suffixIcon,
-      contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16.0),
-        borderSide: BorderSide(color: _inputBorderColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16.0),
-        borderSide: BorderSide(color: _inputBorderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16.0),
-        borderSide: BorderSide(color: _inputBorderColor, width: 1.5),
-      ),
-    );
-  }
+  
 
   // Helper widget for the toggle buttons
-  Widget _buildToggleButton({
-    required String text,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
-          decoration: BoxDecoration(
-            color: isSelected ? _backgroundColor : const Color.fromARGB(0, 146, 19, 19),
-            borderRadius: BorderRadius.circular(14.0),
-          ),
-          child: Center(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: isSelected ? _cardColor : _textGrey,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildToggleButton({
+  //   required String text,
+  //   required bool isSelected,
+  //   required VoidCallback onTap,
+  // }) {
+  //   return Expanded(
+  //     child: GestureDetector(
+  //       onTap: onTap,
+  //       child: Container(
+  //         padding: const EdgeInsets.symmetric(vertical: 12.0),
+  //         decoration: BoxDecoration(
+  //           color: isSelected ? _backgroundColor : const Color.fromARGB(0, 146, 19, 19),
+  //           borderRadius: BorderRadius.circular(14.0),
+  //         ),
+  //         child: Center(
+  //           child: Text(
+  //             text,
+  //             style: TextStyle(
+  //               color: isSelected ? _cardColor : _textGrey,
+  //               fontSize: 16,
+  //               fontWeight: FontWeight.w600,
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }

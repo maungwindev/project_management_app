@@ -3,6 +3,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum TaskStatus { todo, inProgress, done }
 enum TaskPriority { low, medium, high }
 
+extension TaskStatusX on TaskStatus {
+  /// save to Firestore
+  String get value => name;
+
+  /// read from Firestore
+  static TaskStatus fromValue(String? value) {
+    return TaskStatus.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => TaskStatus.todo,
+    );
+  }
+}
+
 class TaskResponseModel {
   final String id;
   final String title;
@@ -34,10 +47,7 @@ class TaskResponseModel {
       id: id,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
-      status: TaskStatus.values.firstWhere(
-        (e) => e.toString() == data['status'],
-        orElse: () => TaskStatus.todo,
-      ),
+      status: TaskStatusX.fromValue(data['status']),
       priority: _parsePriority(data['priority']),
       assignees: List<String>.from(data['assignees'] ?? []),
       dueDate: (data['dueDate'] as Timestamp?)?.toDate(),
@@ -72,7 +82,7 @@ class TaskResponseModel {
     return {
       'title': title,
       'description': description,
-      'status': status.name,
+      'status': status.value,
       'priority': priority.name,
       'assignee': assignees,
       'dueDate': dueDate,

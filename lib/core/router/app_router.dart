@@ -4,6 +4,7 @@ import 'package:pm_app/view/about/about.dart';
 import 'package:pm_app/view/auth/auth_page.dart';
 import 'package:pm_app/view/auth/page/login_page.dart';
 import 'package:pm_app/view/auth/page/register_page.dart';
+import 'package:pm_app/view/home/create_task.dart';
 import 'package:pm_app/view/home/home.dart';
 import 'package:pm_app/view/home/task.dart';
 import 'package:pm_app/view/home/test.dart';
@@ -33,7 +34,10 @@ final List<GetPage> appRoutes = [
   GetPage(
     name: '/tasks',
     page: () => TaskScreen(),
-    binding: AppBindings(),
+  ),
+  GetPage(
+    name: '/create-task',
+    page: () => NewTaskScreen(),
   ),
   GetPage(
     name: '/about',

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 import 'package:pm_app/controller/project_controller.dart';
+import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/controller/task_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
 import 'package:pm_app/repository/project_repo.dart';
@@ -126,5 +127,6 @@ class AppBindings extends Bindings {
 
     Get.lazyPut(() => ThemeController(sharedPref: Get.find()), fenix: true);
     Get.lazyPut(() => InternetConnectionController(), fenix: true);
+    Get.put(ProjectUIController());
   }
 }

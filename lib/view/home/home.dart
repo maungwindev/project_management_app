@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/auth_controller.dart';
+import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
 import 'package:pm_app/view/home/project_page.dart';
 
@@ -13,6 +14,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   
+  final uiController = Get.find<ProjectUIController>();
   int selectedIndex = 0;
 
   final List<String> menuItems = [
@@ -20,6 +22,14 @@ class _HomeScreenState extends State<HomeScreen> {
     'Projects',
     'Reports',
     'Settings',
+  ];
+
+
+  final pages = [
+     DashboardContent(),
+    const ProjectScreen(),
+    const SizedBox(),
+    const SizedBox(),
   ];
 
   @override
@@ -30,35 +40,82 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    return  isMobile? ResponsiveMobile() : ResponsiveWebAndLaptopView();
+    
+  }
+
+
+
+  Widget ResponsiveWebAndLaptopView(){
     return Scaffold(
       body: Row(
-        children: [
-          // Sidebar
-          SidebarWidget(
-            menuItems: menuItems,
-            selectedIndex: selectedIndex,
-            onItemTap: (index) {
-              setState(() {
-                selectedIndex = index;
-              });
-            },
-          ),
-
-          // Main content
-          Expanded(
-            child: Column(
-              children: [
-                TopNavbar(),
-                Expanded(
-                  child: _buildMainContent(),
-                ),
-              ],
+          children: [
+            // Sidebar
+            SidebarWidget(
+              menuItems: menuItems,
+              selectedIndex: selectedIndex,
+              onItemTap: (index) {
+                setState(() {
+                  selectedIndex = index;
+                });
+              },
             ),
+      
+            // Main content
+            Expanded(
+              child: Column(
+                children: [
+                  TopNavbar(),
+                  Expanded(
+                    child: _buildMainContent(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+    );
+  }
+
+  Widget ResponsiveMobile(){
+    return Scaffold(
+      body: pages[selectedIndex],
+      floatingActionButton: selectedIndex ==1? FloatingActionButton(
+        onPressed: () {
+          uiController.openCreate();
+        },
+        child: const Icon(Icons.add),
+      ):SizedBox(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: selectedIndex,
+        onTap: (index) {
+          setState(() => selectedIndex = index);
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.folder),
+            label: 'Projects',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.report),
+            label: 'Reports',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
     );
   }
+  
+
+
 
   Widget _buildMainContent() {
     switch (selectedIndex) {
@@ -214,7 +271,8 @@ class TopNavbar extends StatelessWidget {
 class DashboardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final isMobile = MediaQuery.of(context).size.width <600;
+    return isMobile? Padding(
       padding: const EdgeInsets.all(10.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +298,21 @@ class DashboardContent extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ):ListView(
+        padding: const EdgeInsets.all(12),
+        children: List.generate(
+          6,
+          (index) => Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.extension),
+              title: const Text("Integration"),
+              subtitle: const Text("Notion + Flow"),
+              trailing: const Icon(Icons.chevron_right),
+            ),
+          ),
+        ),
+      );
   }
 }
 

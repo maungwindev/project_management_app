@@ -36,16 +36,29 @@ class TaskService {
   required DateTime dueDate,
 }) async {
   try {
-    await _taskRef(projectId).add({
-      'title': title,
-      'description': description,
-      'status': status,
-      'priority': priority,
-      'assignees': assignees, // ✅ array
-      'dueDate': Timestamp.fromDate(dueDate),
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+   await firestore.runTransaction((tx) async {
+  final taskRef = _taskRef(projectId).doc();
+
+  tx.set(taskRef, {
+    'title': title,
+    'description': description,
+    'status': status,
+    'priority': priority,
+    'assignees': assignees,
+    'dueDate': Timestamp.fromDate(dueDate),
+    'createdAt': FieldValue.serverTimestamp(),
+    'updatedAt': FieldValue.serverTimestamp(),
+  });
+
+  tx.update(
+    firestore.collection('projects').doc(projectId),
+    {
+      'members': FieldValue.arrayUnion(assignees),
+    },
+  );
+});
+
+
 
     return const Right('Task created successfully');
   } catch (e) {

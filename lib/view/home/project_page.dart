@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/project_controller.dart';
+import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/models/response_models/project_model.dart';
+import 'package:pm_app/view/home/project_card.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 
 class ProjectScreen extends StatefulWidget {
   const ProjectScreen({super.key});
@@ -12,6 +15,8 @@ class ProjectScreen extends StatefulWidget {
 
 class _ProjectScreenState extends State<ProjectScreen> {
   final controller = Get.find<ProjectController>();
+  late final ProjectUIController uiController;
+  late Worker _createDialogWorker;
 
   Color _statusColor(ProjectStatus status) {
   switch (status) {
@@ -28,8 +33,34 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 }
 
+@override
+void initState() {
+  super.initState();
+  uiController = Get.find<ProjectUIController>();
+
+  _createDialogWorker = ever(uiController.openCreateDialog, (value) {
+    if (value == true) {
+      _showCreateDialog(context);
+      uiController.reset();
+    }
+  });
+}
+
+@override
+void dispose() {
+  _createDialogWorker.dispose();
+  super.dispose();
+}
+
   @override
   Widget build(BuildContext context) {
+    return ScreenTypeLayout.builder(
+      mobile: (context)=>_mobileResponsive(),
+      desktop:(context)=> _webResponsive(),
+    );
+  }
+
+  Widget _webResponsive(){
     return Column(
       children: [
         // New Project Button
@@ -38,7 +69,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
           child: Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              onPressed: () => _showCreateDialog(context),
+              onPressed: () {
+                 Get.find<ProjectUIController>().openCreate();
+              },
               child: const Text("New Project"),
             ),
           ),
@@ -101,7 +134,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
                               )),
                               DataCell(Text(project.description)),
                               
-                              DataCell(Container(
+                              DataCell(
+                                Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 4),
                                 decoration: BoxDecoration(
@@ -179,6 +213,100 @@ class _ProjectScreenState extends State<ProjectScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _mobileResponsive(){
+    return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'My Projects',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      // color: Colors.white,
+                    ),
+                  ),
+                  SizedBox()
+                ],
+              ),
+              const SizedBox(height: 25),
+              // Filter Tabs
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterTab("All", true),
+                    _buildFilterTab("In Progress", false),
+                    _buildFilterTab("Completed", false),
+                    _buildFilterTab("On Hold", false),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 25),
+              // Projects List
+              Expanded(
+                child: Obx((){
+                  return ListView(
+                  physics: const BouncingScrollPhysics(),
+                  children:  controller.projectList.map((project){
+                    return GestureDetector(
+                      onTap: (){
+                         Get.toNamed(
+                                    '/tasks',
+                                    arguments: {
+                                      'projectId': project.id,
+                                      'ownerId': project.ownerId
+                                    },
+                                  );
+                      },
+                      child: ProjectCard(
+                        projectModel: project,
+                        priority: "HIGH PRIORITY",
+                        priorityBg: Color(0xFF451A1A),
+                        priorityText: Color(0xFFF87171),
+                        title: project.title,
+                        description: project.description,
+                        status: project.status.value.toUpperCase(),
+                        statusColor: Colors.blue,
+                        avatarCount: project.members.length,
+                      ),
+                    );
+                  }).toList(),
+                );
+                })
+                ),
+            ],
+          ),
+        ),
+      );
+  }
+
+  Widget _buildFilterTab(String label, bool isActive) {
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFF3B82F6) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: isActive? Border.all(color: Colors.transparent): Border.all(color: Colors.blue.shade200),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: isActive?Colors.white:Colors.black,
+          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
     );
   }
 
