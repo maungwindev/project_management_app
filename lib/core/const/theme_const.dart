@@ -72,7 +72,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
+        primary: Colors.blue,
         onPrimary: AppColors.primaryForeground,
         secondary: AppColors.secondary,
         onSecondary: AppColors.secondaryForeground,
@@ -121,7 +121,7 @@ class AppTheme {
         ),
       ),
       buttonTheme: const ButtonThemeData(
-        buttonColor: AppColors.primary,
+        buttonColor: Colors.blue,
         textTheme: ButtonTextTheme.primary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(6)),
@@ -129,7 +129,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: Colors.blue,
           foregroundColor: AppColors.primaryForeground,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
@@ -155,7 +155,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: Colors.blue,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           textStyle: textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
@@ -177,7 +177,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: Colors.blue, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
@@ -195,7 +195,7 @@ class AppTheme {
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return Colors.blue;
           }
           return Colors.transparent;
         }),
@@ -208,7 +208,7 @@ class AppTheme {
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return Colors.blue;
           }
           return Colors.transparent;
         }),
@@ -216,20 +216,20 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return Colors.blue;
           }
           return const Color(0xFFE2E8F0);
         }),
         trackColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary.withValues(alpha: 0.5);
+            return Colors.blue.withValues(alpha: 0.5);
           }
           return const Color(0xFFE2E8F0);
         }),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: Colors.blue,
         unselectedItemColor: AppColors.mutedForeground,
         elevation: 0,
         showSelectedLabels: true,
@@ -248,8 +248,8 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.muted,
         disabledColor: AppColors.muted,
-        selectedColor: AppColors.primary,
-        secondarySelectedColor: AppColors.primary,
+        selectedColor: Colors.blue,
+        secondarySelectedColor: Colors.blue,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         labelStyle: textTheme.labelMedium?.copyWith(color: Colors.black),
         secondaryLabelStyle:

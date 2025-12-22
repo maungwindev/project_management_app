@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<!-- Add Internet permission here -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="pm_app"
+        android:label="PM"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

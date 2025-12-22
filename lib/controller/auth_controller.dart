@@ -16,6 +16,7 @@ class AuthController extends GetxController {
   var isLoading = false.obs;
   var userEmail = Rxn<String>();
   var isLoggedIn = false.obs;
+  var errorValue = ''.obs;
 
   /// Login
   Future<bool> login({required Map<String, dynamic> requestBody}) async {
@@ -26,6 +27,7 @@ class AuthController extends GetxController {
 
     final success = result.fold(
       (failure) {
+        errorValue.value = failure;
         clearUser();
         return false;
       },

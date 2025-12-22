@@ -50,7 +50,9 @@ class TaskResponseModel {
       status: TaskStatusX.fromValue(data['status']),
       priority: _parsePriority(data['priority']),
       assignees: List<String>.from(data['assignees'] ?? []),
-      dueDate: (data['dueDate'] as Timestamp?)?.toDate(),
+      dueDate: data['dueDate'] is Timestamp
+    ? (data['dueDate'] as Timestamp).toDate()
+    : data['dueDate'] as DateTime?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -68,15 +70,17 @@ class TaskResponseModel {
   }
 
   static TaskPriority _parsePriority(String? value) {
-    switch (value) {
-      case 'medium':
-        return TaskPriority.medium;
-      case 'high':
-        return TaskPriority.high;
-      default:
-        return TaskPriority.low;
-    }
+  final lower = value?.toLowerCase();
+  switch (lower) {
+    case 'medium':
+      return TaskPriority.medium;
+    case 'high':
+      return TaskPriority.high;
+    default:
+      return TaskPriority.low;
   }
+}
+
 
   Map<String, dynamic> toMap() {
     return {

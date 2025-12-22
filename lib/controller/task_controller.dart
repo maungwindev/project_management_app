@@ -67,11 +67,12 @@ class TaskController extends GetxController {
   }
 
   // ---------------- SUBSCRIBE TASKS ----------------
-  void subscribeTasks({required String projectId,required String ownerId}) {
+  void subscribeTasks({required String projectId, required String ownerId}) {
     isLoading.value = true;
     _taskSub?.cancel();
 
-    _taskSub = taskRepository.getTasks(projectId: projectId,ownerId: ownerId).listen(
+    _taskSub =
+        taskRepository.getTasks(projectId: projectId, ownerId: ownerId).listen(
       (either) {
         either.fold(
           (error) {
@@ -130,6 +131,9 @@ class TaskController extends GetxController {
     required String taskId,
     required Map<String, dynamic> data,
   }) async {
+    isCreating.value = true;
+    errorMessage.value = '';
+    successMessage.value = '';
     final result = await taskRepository.updateTask(
       projectId: projectId,
       taskId: taskId,
@@ -137,9 +141,27 @@ class TaskController extends GetxController {
     );
 
     result.fold(
-      (error) => errorMessage.value = error,
-      (_) => successMessage.value = 'Task updated',
-    );
+  (error) => errorMessage.value = error,
+  (_) {
+    int index = taskList.indexWhere((t) => t.id == taskId);
+    if (index != -1) {
+      final oldTask = taskList[index];
+
+      print("old task:${oldTask}////${taskId}");
+      print("index::${index}");
+      print("data:${data}");
+
+      // create a new object with updated values
+      taskList[index] = TaskResponseModel.fromFirestore(taskId, data);
+
+      taskList.refresh(); // notify UI
+    }
+    successMessage.value = 'Task updated';
+  },
+);
+
+
+    isCreating.value = false;
   }
 
   // ---------------- UPDATE STATUS ----------------

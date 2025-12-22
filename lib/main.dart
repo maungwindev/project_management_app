@@ -51,6 +51,7 @@ class MyApp extends StatelessWidget {
 
     return Obx(() {
       return GetMaterialApp(
+        navigatorKey: Get.key,
         debugShowCheckedModeBanner: false,
         title: GlobalConst.appName,
         theme: themeController.theme.value,

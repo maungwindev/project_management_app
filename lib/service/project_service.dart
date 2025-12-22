@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:pm_app/models/response_models/project_model.dart';
+import 'package:pm_app/models/response_models/user_model.dart';
 import 'package:rxdart/rxdart.dart';
 
 class ProjectService {
@@ -22,12 +23,25 @@ class ProjectService {
     }
 
     try {
+      // ✅ Fetch user ONCE
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      final username = userDoc.exists
+          ? UserResponseModel.fromFirestore(
+              userDoc.data()!,
+              userDoc.id,
+            ).name
+          : 'Unknown';
+
+      // ✅ Save NORMAL String value
       await FirebaseFirestore.instance.collection('projects').add({
         'ownerId': uid,
+        'ownerName': username, // ✅ String
         'title': title,
         'description': description,
         'status': 'not_started',
-        'members': [uid], 
+        'members': [uid],
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -41,33 +55,31 @@ class ProjectService {
   }
 
   Stream<Either<String, List<ProjectResponseModel>>> getProjects() {
-  final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
-  return FirebaseFirestore.instance
-      .collection('projects')
-      .where('members', arrayContains: uid)
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map<Either<String, List<ProjectResponseModel>>>((snapshot) {
-    try {
-      final projects = snapshot.docs.map((doc) {
-        return ProjectResponseModel.fromFirestore(doc.id, doc.data());
-      }).toList();
+    return FirebaseFirestore.instance
+        .collection('projects')
+        .where('members', arrayContains: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map<Either<String, List<ProjectResponseModel>>>((snapshot) {
+      try {
+        final projects = snapshot.docs.map((doc) {
+          return ProjectResponseModel.fromFirestore(doc.id, doc.data());
+        }).toList();
 
-      logService.logInfo(projects.toString());
-      return Right(projects);
-    } catch (e) {
-      logService.logError(e.toString());
-      return Left('Failed to parse project data: $e');
-    }
-  }).onErrorReturnWith((error, stackTrace) {
-    // ✅ Use onErrorReturnWith to emit a value instead of changing the stream type
-    logService.logError(error.toString());
-    return Left('Firestore error: $error');
-  });
-}
-
-
+        logService.logInfo(projects.toString());
+        return Right(projects);
+      } catch (e) {
+        logService.logError(e.toString());
+        return Left('Failed to parse project data: $e');
+      }
+    }).onErrorReturnWith((error, stackTrace) {
+      // ✅ Use onErrorReturnWith to emit a value instead of changing the stream type
+      logService.logError(error.toString());
+      return Left('Firestore error: $error');
+    });
+  }
 
   Future<Either<String, String>> updateProjectStatus({
     required String projectId,

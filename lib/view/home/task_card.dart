@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pm_app/controller/project_controller.dart';
-import 'package:pm_app/models/response_models/project_model.dart';
+import 'package:pm_app/controller/task_controller.dart';
 import 'package:pm_app/models/response_models/response_model.dart';
 
 class TaskCard extends StatelessWidget {
@@ -17,9 +16,14 @@ class TaskCard extends StatelessWidget {
   final bool isDone;
   final bool useInitials;
   final TaskResponseModel taskModel;
+  final String projectId;
+  final Function onEdit;
+  final String currentUserId;
+  final String ownerId;
 
    TaskCard({
     super.key,
+    required this.projectId,
     required this.taskModel,
     required this.priority,
     required this.priorityBg,
@@ -32,9 +36,12 @@ class TaskCard extends StatelessWidget {
     this.extraAvatars,
     this.isDone = false,
     this.useInitials = false,
+    required this.onEdit,
+    required this.currentUserId,
+    required this.ownerId
   });
 
-  final controller = Get.find<ProjectController>();
+  final controller = Get.find<TaskController>();
 
   Color _statusColor(TaskStatus status) {
   switch (status) {
@@ -58,7 +65,7 @@ class TaskCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white, // Card color
          borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade200),
+        border: Border.all(color: priorityText),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +81,7 @@ class TaskCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  priority,
+                  priority.toUpperCase(),
                   style: TextStyle(
                     color: priorityText,
                     fontSize: 10,
@@ -83,43 +90,49 @@ class TaskCard extends StatelessWidget {
                 ),
               ),
               // const Icon(Icons.more_horiz, color: Colors.grey),
-              PopupMenuButton<int>(
-              offset: const Offset(0, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              itemBuilder: (context) => [
-                // const PopupMenuDivider(),
-                PopupMenuItem(
-                  onTap: () {
-                    // Handle logout
-                    //authController.clearUser();
-                   Get.offAllNamed('/login');
-                  },
-                  child: Row(
-                    children: const [
-                      Icon(Icons.edit, size: 18, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text("Edit"),
-                    ],
+              if(currentUserId == ownerId)
+                PopupMenuButton<int>(
+                offset: const Offset(0, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                itemBuilder: (context) => [
+                  // const PopupMenuDivider(),
+                  PopupMenuItem(
+                    onTap: () {
+                      onEdit();
+                      // Handle logout
+                      //authController.clearUser();
+                    //  Get.offAllNamed('/login');
+                    },
+                    child: Row(
+                      children: const [
+                        Icon(Icons.edit, size: 18, color: Colors.black),
+                        SizedBox(width: 8),
+                        Text("Edit"),
+                      ],
+                    ),
                   ),
-                ),
-                PopupMenuDivider(),
-                PopupMenuItem(
-                  onTap: () {
-                    // Handle logout
-                    //authController.clearUser();
-                   Get.offAllNamed('/login');
-                  },
-                  child: Row(
-                    children: const [
-                      Icon(Icons.delete_forever, size: 18, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text("Delete"),
-                    ],
+                  PopupMenuDivider(),
+                  PopupMenuItem(
+                    onTap: () {
+                      controller.deleteTask(
+                        projectId: projectId,
+                        taskId: taskModel.id,
+                      );
+                      // Handle logout
+                      //authController.clearUser();
+                    //  Get.offAllNamed('/login');
+                    },
+                    child: Row(
+                      children: const [
+                        Icon(Icons.delete_forever, size: 18, color: Colors.black),
+                        SizedBox(width: 8),
+                        Text("Delete"),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-              child:Icon(Icons.more_horiz, color: Colors.grey) ,
-            ),
+                ],
+                child:Icon(Icons.more_horiz, color: Colors.grey) ,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -196,7 +209,7 @@ class TaskCard extends StatelessWidget {
                                       return DropdownMenuItem<TaskStatus>(
                                         value: status,
                                         child: Text(
-                                          status.name,
+                                          status.name.toUpperCase(),
                                           style: TextStyle(
                                             // Text color matches the primary status color
                                             color: _statusColor(status),
@@ -211,9 +224,10 @@ class TaskCard extends StatelessWidget {
                                       if (value == null) return;
                                       // Logic remains the same
                                       taskModel.status = value;
-                                      controller.updatedProjectStatus(
+                                      controller.updateTaskStatus(
                                         status: taskModel.status.value,
-                                        projectId: taskModel.id,
+                                        projectId:projectId ,
+                                        taskId: taskModel.id
                                       );
                                     },
                                   ),

@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import 'package:pm_app/controller/project_controller.dart';
 import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/controller/task_controller.dart';
+import 'package:pm_app/controller/task_ui_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
 import 'package:pm_app/repository/project_repo.dart';
 import 'package:pm_app/repository/task_repo.dart';
@@ -118,7 +119,7 @@ class AppBindings extends Bindings {
       sharedPref: Get.find(),
     ), fenix: true);
 
-    Get.lazyPut(() => UserController(userRepository: Get.find()), fenix: true);
+    Get.lazyPut(() => UserController(userRepository: Get.find(),sharedPref: Get.find()), fenix: true);
     Get.lazyPut(() => ProjectController(projectRepository: Get.find()), fenix: true);
     Get.lazyPut(() => TaskController(
       taskRepository: Get.find(),
@@ -128,5 +129,6 @@ class AppBindings extends Bindings {
     Get.lazyPut(() => ThemeController(sharedPref: Get.find()), fenix: true);
     Get.lazyPut(() => InternetConnectionController(), fenix: true);
     Get.put(ProjectUIController());
+    // Get.put(TaskUIController());
   }
 }

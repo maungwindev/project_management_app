@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:pm_app/controller/auth_controller.dart';
 import 'package:pm_app/core/component/custom_Inputdecoration.dart';
 import 'package:pm_app/core/component/loading_widget.dart';
+import 'package:pm_app/core/utils/snackbar.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   final Color _textGrey = const Color(0xFF8F9BB3);
 
   // Example login function
-  void login() async {
+  void login(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
       final success = await authController.login(
         requestBody: {
@@ -37,20 +38,28 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (success) {
-        Get.snackbar(
-          'Success',
-          'Login successful',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-
-        // Navigate to home/dashboard
         Get.offAllNamed('/home');
+
+        showMaterialSnackBar(context,'Login successful');
+
+        // Future.delayed(const Duration(milliseconds: 300), () {
+        //   Get.snackbar(
+        //     'Success',
+        //     'Login successful',
+        //     snackPosition: SnackPosition.BOTTOM,
+        //     margin: const EdgeInsets.all(16),
+        //   );
+        // });
       } else {
-        Get.snackbar(
-          'Login Failed',
-          'Invalid email or password',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+          showMaterialSnackBar(context,authController.errorValue.value);
+        // WidgetsBinding.instance.addPostFrameCallback((_){
+        //   Get.snackbar(
+        //   'Login Failed',
+        //   authController.errorValue.value,
+        //   snackPosition: SnackPosition.BOTTOM,
+        //   margin: const EdgeInsets.all(16),
+        // );
+        // });
       }
     }
   }
@@ -120,12 +129,16 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: buildInputDecoration(
                         hintText: "Enter Your Password",
                         prefixIcon: Icons.lock,
-                        suffixIcon: GestureDetector(onTap: (){
-                          setState(() {
-                            isObscured = !isObscured;
-                          });
-                        },child: isObscured?Icon(Icons.visibility_off) : Icon(Icons.visibility),)
-                        ),
+                        suffixIcon: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isObscured = !isObscured;
+                            });
+                          },
+                          child: isObscured
+                              ? Icon(Icons.visibility_off)
+                              : Icon(Icons.visibility),
+                        )),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
@@ -157,8 +170,9 @@ class _LoginPageState extends State<LoginPage> {
                     return SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed:
-                            authController.isLoading.value ? null : login,
+                        
+                         onPressed:
+                          authController.isLoading.value ? null : ()=>login(context),
                         style: ElevatedButton.styleFrom(
                           // backgroundColor: _backgroundColor,
                           foregroundColor: Colors.white,
@@ -223,8 +237,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
-  
 
   // Helper widget for the toggle buttons
   // Widget _buildToggleButton({

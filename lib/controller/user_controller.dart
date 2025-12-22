@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'package:get/get.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:pm_app/models/response_models/response_model.dart';
+import 'package:pm_app/core/local_data/shared_prefs.dart';
 import 'package:pm_app/models/response_models/user_model.dart';
 import 'package:pm_app/repository/user_repo.dart';
 
 class UserController extends GetxController {
   final UserRepository userRepository;
+   final SharedPref sharedPref;
 
-  UserController({required this.userRepository});
+  UserController({required this.userRepository,required this.sharedPref});
 
   var isLoading = false.obs;
   var users = <UserResponseModel>[].obs;
@@ -94,6 +95,11 @@ class UserController extends GetxController {
       errorMessage.value = l;
       return false;
     }, (r) {
+
+       sharedPref.setString(
+          key: sharedPref.userInfo,
+          value: email,
+        );
       successMessage.value = r;
       isRegister.value = false;
       return true;

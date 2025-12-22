@@ -97,7 +97,7 @@ class AuthRepository {
     final responseData = await authService.login(requestBody: requestBody);
     return responseData.fold(
         (error) {
-          return const Left('Login Failed');
+          return  Left(error);
         },
         (data) {
           return  Right(data);

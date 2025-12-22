@@ -1,4 +1,4 @@
-enum ProjectStatus { not_started, ongoing, completed, archived }
+enum ProjectStatus { onhold, ongoing, completed, archived }
 
 extension ProjectStatusX on ProjectStatus {
   /// save to Firestore
@@ -8,7 +8,7 @@ extension ProjectStatusX on ProjectStatus {
   static ProjectStatus fromValue(String? value) {
     return ProjectStatus.values.firstWhere(
       (e) => e.name == value,
-      orElse: () => ProjectStatus.not_started,
+      orElse: () => ProjectStatus.onhold,
     );
   }
 }
@@ -20,6 +20,7 @@ class ProjectResponseModel {
   ProjectStatus status;
   List<String> members; // 🔥 NEW
   String ownerId;
+  String ownerName;
 
   ProjectResponseModel({
     required this.id,
@@ -27,7 +28,8 @@ class ProjectResponseModel {
     required this.description,
     required this.status,
     required this.members,
-    required this.ownerId
+    required this.ownerId,
+    required this.ownerName
   });
 
   factory ProjectResponseModel.fromFirestore(
@@ -39,6 +41,7 @@ class ProjectResponseModel {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       ownerId: json['ownerId'] ?? '',
+      ownerName: json['ownerName'] ?? '',
       status: ProjectStatusX.fromValue(json['status']),
       members: List<String>.from(json['members'] ?? []), // ✅ safe
     );
@@ -50,7 +53,8 @@ class ProjectResponseModel {
       'description': description,
       'status': status.value,
       'members': members, // 🔥 REQUIRED
-      'ownerId':ownerId
+      'ownerId':ownerId,
+      'ownerName':ownerName
     };
   }
 }

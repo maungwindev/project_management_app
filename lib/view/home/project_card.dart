@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/project_controller.dart';
+import 'package:pm_app/core/const/app_colors.dart';
 import 'package:pm_app/models/response_models/product_model.dart';
 import 'package:pm_app/models/response_models/project_model.dart';
 
@@ -38,7 +39,7 @@ class ProjectCard extends StatelessWidget {
 
   Color _statusColor(ProjectStatus status) {
   switch (status) {
-    case ProjectStatus.not_started: // "To Do"
+    case ProjectStatus.onhold: // "To Do"
       return const Color(0xFF64748B); // Slate Grey
     case ProjectStatus.ongoing:    // "In Progress"
       return const Color(0xFF3B82F6); // Bright Blue
@@ -72,13 +73,13 @@ class ProjectCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: priorityBg,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  priority,
+                 'Created By : ${ projectModel.ownerName.toUpperCase()}',
                   style: TextStyle(
-                    color: priorityText,
+                    color: Colors.white,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -198,7 +199,7 @@ class ProjectCard extends StatelessWidget {
                                       return DropdownMenuItem<ProjectStatus>(
                                         value: status,
                                         child: Text(
-                                          status.name,
+                                          status.name.toUpperCase(),
                                           style: TextStyle(
                                             // Text color matches the primary status color
                                             color: _statusColor(status),

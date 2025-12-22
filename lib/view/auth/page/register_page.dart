@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/user_controller.dart';
 import 'package:pm_app/core/component/custom_Inputdecoration.dart';
+import 'package:pm_app/core/component/loading_widget.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -171,15 +172,14 @@ class _RegisterPageState extends State<RegisterPage> {
                   Obx(() {
                     return SizedBox(
                       width: double.infinity,
-                      height: 40,
+                      height: 50,
                       child: ElevatedButton(
                         onPressed:
                             userController.isRegister.value ? null : register,
                         child: userController.isRegister.value
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
-                            : const Text('Sign Up',
-                                style: TextStyle(fontSize: 18)),
+                            ? LoadingWidget()
+                            : const Text('Register',
+                                style: TextStyle(fontSize: 16)),
                       ),
                     );
                   }),

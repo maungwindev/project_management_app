@@ -4,6 +4,7 @@ import 'package:pm_app/controller/auth_controller.dart';
 import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
 import 'package:pm_app/view/home/project_page.dart';
+import 'package:pm_app/view/home/setting.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,8 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final pages = [
      DashboardContent(),
     const ProjectScreen(),
-    const SizedBox(),
-    const SizedBox(),
+    const SizedBox(child: Center(child: Text("Still Developing"),),),
+    const SettingScreen(),
   ];
 
   @override
@@ -126,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         return const SizedBox();
       case 3:
-        return const SizedBox();
+        return const SettingScreen();
       default:
         return const SizedBox();
     }
@@ -272,31 +273,35 @@ class DashboardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width <600;
-    return isMobile? Padding(
-      padding: const EdgeInsets.all(10.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Integration", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text(
-            "Reconfigure your workflow and handle repetitive tasks with integration.",
-            style: TextStyle(color: Colors.grey),
+    return isMobile? SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Demo Dashboard", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text(
+                "Reconfigure your workflow and handle repetitive tasks with integration.",
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 400,
+                  mainAxisExtent: 200,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                ),
+                itemCount: 6,
+                itemBuilder: (context, index) => const IntegrationCard(),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 400,
-              mainAxisExtent: 200,
-              crossAxisSpacing: 20,
-              mainAxisSpacing: 20,
-            ),
-            itemCount: 6,
-            itemBuilder: (context, index) => const IntegrationCard(),
-          ),
-        ],
+        ),
       ),
     ):ListView(
         padding: const EdgeInsets.all(12),
