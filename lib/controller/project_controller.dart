@@ -77,7 +77,11 @@ class ProjectController extends GetxController {
     final result = await projectRepository.updatedProjectStatus(
         status: status, projectId: projectId);
     result.fold((error) => errorMessage.value = error,
-        (success) => successMessage.value = '');
+        (success) {
+          projectList.refresh();
+          successMessage.value = '';
+
+          });
   }
 
   @override

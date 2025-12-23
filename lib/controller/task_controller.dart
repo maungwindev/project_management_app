@@ -1,7 +1,8 @@
 import 'dart:async';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:pm_app/models/response_models/project_model.dart';
 import 'package:pm_app/models/response_models/response_model.dart';
 import 'package:pm_app/models/response_models/user_model.dart';
 import 'package:pm_app/repository/task_repo.dart';
@@ -9,7 +10,7 @@ import 'package:pm_app/repository/user_repo.dart';
 
 class TaskController extends GetxController {
   final TaskRepository taskRepository;
-  final UserRepository userRepository; // ✅ add user repository
+  final UserRepository userRepository;
 
   TaskController({
     required this.taskRepository,
@@ -19,8 +20,11 @@ class TaskController extends GetxController {
   // ---------------- STATE ----------------
   var isLoading = false.obs;
   var isCreating = false.obs;
+  var isDashboardLoading = false.obs;
 
   var taskList = <TaskResponseModel>[].obs;
+  var todayTasks = <TaskResponseModel>[].obs;
+
   var errorMessage = ''.obs;
   var successMessage = ''.obs;
 
@@ -30,11 +34,13 @@ class TaskController extends GetxController {
   StreamSubscription<Either<String, List<TaskResponseModel>>>? _taskSub;
   StreamSubscription<Either<String, List<UserResponseModel>>>? _userSub;
 
+  bool _dashboardLoaded = false;
+
   // ---------------- INIT ----------------
   @override
   void onInit() {
     super.onInit();
-    subscribeUsers(); // ✅ subscribe users on init
+    subscribeUsers();
   }
 
   @override
@@ -44,6 +50,7 @@ class TaskController extends GetxController {
     super.onClose();
   }
 
+  // ---------------- USERS ----------------
   void subscribeUsers() {
     _userSub?.cancel();
     _userSub = userRepository.getUsers().listen(
@@ -54,7 +61,6 @@ class TaskController extends GetxController {
             errorMessage.value = error;
           },
           (users) {
-            // List<UserResponseModel> unselectedUser = selectedAssignees.contains(element)
             allUsers.assignAll(users);
           },
         );
@@ -66,7 +72,7 @@ class TaskController extends GetxController {
     );
   }
 
-  // ---------------- SUBSCRIBE TASKS ----------------
+  // ---------------- TASKS ----------------
   void subscribeTasks({required String projectId, required String ownerId}) {
     isLoading.value = true;
     _taskSub?.cancel();
@@ -119,7 +125,12 @@ class TaskController extends GetxController {
 
     result.fold(
       (error) => errorMessage.value = error,
-      (success) => successMessage.value = success,
+      (success) {
+        taskList.refresh();
+        
+   
+        successMessage.value = success;
+      },
     );
 
     isCreating.value = false;
@@ -134,6 +145,7 @@ class TaskController extends GetxController {
     isCreating.value = true;
     errorMessage.value = '';
     successMessage.value = '';
+
     final result = await taskRepository.updateTask(
       projectId: projectId,
       taskId: taskId,
@@ -141,25 +153,17 @@ class TaskController extends GetxController {
     );
 
     result.fold(
-  (error) => errorMessage.value = error,
-  (_) {
-    int index = taskList.indexWhere((t) => t.id == taskId);
-    if (index != -1) {
-      final oldTask = taskList[index];
-
-      print("old task:${oldTask}////${taskId}");
-      print("index::${index}");
-      print("data:${data}");
-
-      // create a new object with updated values
-      taskList[index] = TaskResponseModel.fromFirestore(taskId, data);
-
-      taskList.refresh(); // notify UI
-    }
-    successMessage.value = 'Task updated';
-  },
-);
-
+      (error) => errorMessage.value = error,
+      (_) {
+        int index = taskList.indexWhere((t) => t.id == taskId);
+        if (index != -1) {
+          taskList[index] = TaskResponseModel.fromFirestore(taskId, data);
+          taskList.refresh();
+        }
+        // loadTodayTasksFromProjects();
+        successMessage.value = 'Task updated';
+      },
+    );
 
     isCreating.value = false;
   }
@@ -178,11 +182,13 @@ class TaskController extends GetxController {
 
     result.fold(
       (error) => errorMessage.value = error,
-      (_) => successMessage.value = 'Status updated',
+      (_) {
+        successMessage.value = 'Status updated';
+        },
     );
   }
 
-  // ---------------- ADD ASSIGNEE ----------------
+  // ---------------- ADD / REMOVE ASSIGNEE ----------------
   Future<void> addAssignee({
     required String projectId,
     required String taskId,
@@ -196,11 +202,13 @@ class TaskController extends GetxController {
 
     result.fold(
       (error) => errorMessage.value = error,
-      (_) => successMessage.value = 'Assignee added',
+      (_) {
+        taskList.refresh();
+        successMessage.value = 'Assignee added';
+      },
     );
   }
 
-  // ---------------- REMOVE ASSIGNEE ----------------
   Future<void> removeAssignee({
     required String projectId,
     required String taskId,
@@ -214,7 +222,10 @@ class TaskController extends GetxController {
 
     result.fold(
       (error) => errorMessage.value = error,
-      (_) => successMessage.value = 'Assignee removed',
+      (_) {
+        taskList.refresh();
+        successMessage.value = 'Assignee removed';
+      },
     );
   }
 
@@ -230,7 +241,53 @@ class TaskController extends GetxController {
 
     result.fold(
       (error) => errorMessage.value = error,
-      (_) => successMessage.value = 'Task deleted',
+      (_) {
+        taskList.refresh();
+        successMessage.value = 'Task deleted';
+      },
     );
   }
+
+  // ---------------- TODAY TASKS ----------------
+  Future<void> loadTodayTasksFromProjects(
+      List<ProjectResponseModel> projects) async {
+    if (_dashboardLoaded) return;
+
+    isDashboardLoading.value = true;
+    todayTasks.clear();
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    for (final project in projects) {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(project.id)
+          .collection('tasks')
+          .get();
+
+      for (final doc in snapshot.docs) {
+
+        final task = TaskResponseModel.fromFirestore(doc.id, doc.data());
+
+        if (task.dueDate == null) continue;
+
+        final due = DateTime(
+          task.dueDate!.year,
+          task.dueDate!.month,
+          task.dueDate!.day,
+        );
+
+        if (due == today) {
+          todayTasks.add(task);
+        }
+      }
+    }
+
+    isDashboardLoading.value = false;
+    _dashboardLoaded = true;
+  }
+
+  
+
 }

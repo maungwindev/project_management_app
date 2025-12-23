@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/auth_controller.dart';
+import 'package:pm_app/controller/project_controller.dart';
 import 'package:pm_app/controller/project_ui_controller.dart';
+import 'package:pm_app/controller/task_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
+import 'package:pm_app/models/response_models/project_model.dart';
+import 'package:pm_app/models/response_models/response_model.dart';
 import 'package:pm_app/view/home/project_page.dart';
 import 'package:pm_app/view/home/setting.dart';
 
@@ -14,8 +18,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  
   final uiController = Get.find<ProjectUIController>();
+  final projectController = Get.find<ProjectController>();
+  final taskController = Get.find<TaskController>();
   int selectedIndex = 0;
 
   final List<String> menuItems = [
@@ -25,69 +30,74 @@ class _HomeScreenState extends State<HomeScreen> {
     'Settings',
   ];
 
-
-  final pages = [
-     DashboardContent(),
-    const ProjectScreen(),
-    const SizedBox(child: Center(child: Text("Still Developing"),),),
-    const SettingScreen(),
-  ];
+  late final pages;
 
   @override
   void initState() {
     super.initState();
-    
+    pages = [
+      DashboardContent(
+        projectController: projectController,
+        taskController: taskController,
+      ),
+      const ProjectScreen(),
+      const SizedBox(
+        child: Center(
+          child: Text("Still Developing"),
+        ),
+      ),
+      const SettingScreen(),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
-    return  isMobile? ResponsiveMobile() : ResponsiveWebAndLaptopView();
-    
+    return isMobile ? ResponsiveMobile() : ResponsiveWebAndLaptopView();
   }
 
-
-
-  Widget ResponsiveWebAndLaptopView(){
+  Widget ResponsiveWebAndLaptopView() {
     return Scaffold(
       body: Row(
-          children: [
-            // Sidebar
-            SidebarWidget(
-              menuItems: menuItems,
-              selectedIndex: selectedIndex,
-              onItemTap: (index) {
-                setState(() {
-                  selectedIndex = index;
-                });
-              },
+        children: [
+          // Sidebar
+          SidebarWidget(
+            menuItems: menuItems,
+            selectedIndex: selectedIndex,
+            onItemTap: (index) {
+              setState(() {
+                selectedIndex = index;
+              });
+            },
+          ),
+
+          // Main content
+          Expanded(
+            child: Column(
+              children: [
+                TopNavbar(),
+                Expanded(
+                  child: _buildMainContent(),
+                ),
+              ],
             ),
-      
-            // Main content
-            Expanded(
-              child: Column(
-                children: [
-                  TopNavbar(),
-                  Expanded(
-                    child: _buildMainContent(),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget ResponsiveMobile(){
+  Widget ResponsiveMobile() {
     return Scaffold(
       body: pages[selectedIndex],
-      floatingActionButton: selectedIndex ==1? FloatingActionButton(
-        onPressed: () {
-          uiController.openCreate();
-        },
-        child: const Icon(Icons.add),
-      ):SizedBox(),
+      floatingActionButton: selectedIndex == 1
+          ? FloatingActionButton(
+              onPressed: () {
+                uiController.openCreate();
+              },
+              child: const Icon(Icons.add),
+            )
+          : SizedBox(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: (index) {
@@ -114,14 +124,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
-
-
 
   Widget _buildMainContent() {
     switch (selectedIndex) {
       case 0:
-        return DashboardContent();
+        return DashboardContent(
+          projectController: projectController,
+          taskController: taskController,
+        );
       case 1:
         return const ProjectScreen();
       case 2:
@@ -149,17 +159,23 @@ class SidebarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<IconData> iconData = [Icons.dashboard,Icons.folder,Icons.report,Icons.settings];
+    final List<IconData> iconData = [
+      Icons.dashboard,
+      Icons.folder,
+      Icons.report,
+      Icons.settings
+    ];
     return Container(
       width: 200,
       decoration: BoxDecoration(
-         border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("PM APP", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const Text("PM APP",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 30),
           ...List.generate(menuItems.length, (index) {
             final isActive = selectedIndex == index;
@@ -169,13 +185,15 @@ class SidebarWidget extends StatelessWidget {
                 onTap: () => onItemTap(index),
                 child: Row(
                   children: [
-                    Icon(iconData[index], size: 20, color: isActive ? Colors.blue : Colors.grey),
+                    Icon(iconData[index],
+                        size: 20, color: isActive ? Colors.blue : Colors.grey),
                     const SizedBox(width: 12),
                     Text(
                       menuItems[index],
                       style: TextStyle(
                         color: isActive ? Colors.black : Colors.grey,
-                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isActive ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -201,7 +219,8 @@ class TopNavbar extends StatelessWidget {
     return Obx(() {
       final user = controller.currentUserInfo.value;
       final displayName = user?.name ?? 'User';
-      final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+      final firstLetter =
+          displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
 
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -214,16 +233,19 @@ class TopNavbar extends StatelessWidget {
             // Profile circle with first letter
             PopupMenuButton<int>(
               offset: const Offset(0, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               itemBuilder: (context) => [
                 PopupMenuItem(
-                
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(displayName,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text(user?.email ?? '', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(user?.email ?? '',
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -232,7 +254,7 @@ class TopNavbar extends StatelessWidget {
                   onTap: () {
                     // Handle logout
                     authController.clearUser();
-                   Get.offAllNamed('/login');
+                    Get.offAllNamed('/login');
                   },
                   child: Row(
                     children: const [
@@ -250,7 +272,8 @@ class TopNavbar extends StatelessWidget {
                     backgroundColor: Colors.blue,
                     child: Text(
                       firstLetter,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -267,105 +290,425 @@ class TopNavbar extends StatelessWidget {
   }
 }
 
-
 // Dashboard Content (Grid Cards)
-class DashboardContent extends StatelessWidget {
+class DashboardContent extends StatefulWidget {
+  final ProjectController projectController;
+  final TaskController taskController;
+
+  const DashboardContent({
+    super.key,
+    required this.projectController,
+    required this.taskController,
+  });
+
+  @override
+  State<DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<DashboardContent> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Wait until first frame to avoid context issues
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadTodayTasks();
+      // Listen for project list changes if loaded asynchronously
+      widget.projectController.projectList.listen((projects) {
+        if (projects.isNotEmpty) {
+          _loadTodayTasks();
+        }
+      });
+    });
+  }
+
+  void _loadTodayTasks() {
+    final projects = widget.projectController.projectList;
+    if (projects.isNotEmpty) {
+      widget.taskController.loadTodayTasksFromProjects(projects);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width <600;
-    return isMobile? SafeArea(
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    return isMobile ? _mobileView() : _webView();
+  }
+
+  Widget _mobileView() {
+    return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(10.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Demo Dashboard", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text(
+                "Project Overview",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               const Text(
                 "Reconfigure your workflow and handle repetitive tasks with integration.",
                 style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 24),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 400,
-                  mainAxisExtent: 200,
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                ),
-                itemCount: 6,
-                itemBuilder: (context, index) => const IntegrationCard(),
+
+              // Project Cards
+              Obx(() {
+                final projects = widget.projectController.projectList;
+                if (projects.isEmpty) {
+                  return const SizedBox(
+                    height: 220,
+                    child: Center(child: Text("No projects found")),
+                  );
+                }
+
+                return SizedBox(
+                  height: 220,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: projects.length > 4 ? 4 : projects.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: SizedBox(
+                          width: 250,
+                          child: IntegrationCard(
+                            projectResponseModel: projects[index],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }),
+              const SizedBox(height: 24),
+
+              // Tasks Today
+              const Text(
+                "Tasks Today",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
+              Obx(() {
+                if (widget.taskController.isDashboardLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final todayTasks = widget.taskController.todayTasks;
+                if (todayTasks.isEmpty) {
+                  return const Text("No tasks due today");
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: todayTasks.length,
+                  itemBuilder: (_, index) {
+                    return TaskIntegrationCard(
+                      taskResponseModel: todayTasks[index],
+                    );
+                  },
+                );
+              }),
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
-    ):ListView(
-        padding: const EdgeInsets.all(12),
-        children: List.generate(
-          6,
-          (index) => Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: const Icon(Icons.extension),
-              title: const Text("Integration"),
-              subtitle: const Text("Notion + Flow"),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-          ),
+    );
+  }
+
+  Widget _webView() {
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        const Text(
+          "Dashboard - Web View",
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
-      );
+        const SizedBox(height: 20),
+
+        // For simplicity, just show project cards
+        Obx(() {
+          final projects = widget.projectController.projectList;
+          if (projects.isEmpty) return const Text("No projects found");
+
+          return Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: projects
+                .map((project) => SizedBox(
+                      width: 250,
+                      child: IntegrationCard(projectResponseModel: project),
+                    ))
+                .toList(),
+          );
+        }),
+
+        const SizedBox(height: 30),
+
+        const Text(
+          "Tasks Today",
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        Obx(() {
+          if (widget.taskController.isDashboardLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final todayTasks = widget.taskController.todayTasks;
+          if (todayTasks.isEmpty) return const Text("No tasks due today");
+
+          return Column(
+            children: todayTasks
+                .map((task) => TaskIntegrationCard(taskResponseModel: task))
+                .toList(),
+          );
+        }),
+      ],
+    );
   }
 }
 
+
 // Card Widget
 class IntegrationCard extends StatelessWidget {
-  const IntegrationCard({super.key});
+  final ProjectResponseModel projectResponseModel;
+  const IntegrationCard({super.key, required this.projectResponseModel});
+
+  Color _statusColor(ProjectStatus status) {
+    switch (status) {
+      case ProjectStatus.onhold: // "To Do"
+        return const Color(0xFF64748B); // Slate Grey
+      case ProjectStatus.ongoing: // "In Progress"
+        return const Color(0xFF3B82F6); // Bright Blue
+      case ProjectStatus.completed:
+        return const Color(0xFF10B981); // Emerald Green
+      case ProjectStatus.archived:
+        return const Color(0xFF6366F1); // Indigo
+      default:
+        return Colors.black;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.blue.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /// Top Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Notion + Flows list", style: TextStyle(fontWeight: FontWeight.w600)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
-                child: const Text("Activate", style: TextStyle(color: Colors.green, fontSize: 10)),
-              )
+              SizedBox(
+                width: 100,
+                child: Text(
+                  projectResponseModel.title,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
             ],
           ),
-          const Spacer(),
-          const Row(
+
+          const SizedBox(height: 20),
+
+          /// Icons Row
+          Row(
             children: [
-              Icon(Icons.notes, size: 24),
-              Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Icon(Icons.swap_horiz, color: Colors.grey)),
-              Icon(Icons.grid_view_rounded, size: 24),
+              SizedBox(
+                  width: 150,
+                  child: Text(
+                    projectResponseModel.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )),
             ],
           ),
+
           const Spacer(),
-          const Row(
+
+          /// Bottom Row
+          Row(
             children: [
               CircleAvatar(radius: 12, backgroundColor: Colors.blueGrey),
               SizedBox(width: 8),
-              Text("by Group", style: TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                "by ${projectResponseModel.ownerName}",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
               Spacer(),
-              Icon(Icons.more_horiz, color: Colors.grey),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _statusColor(projectResponseModel.status)
+                      .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "${projectResponseModel.status.value.toUpperCase()}",
+                  style: TextStyle(
+                      color: _statusColor(projectResponseModel.status),
+                      fontSize: 10),
+                ),
+              ),
             ],
-          )
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TaskIntegrationCard extends StatelessWidget {
+  final TaskResponseModel taskResponseModel;
+
+  const TaskIntegrationCard({
+    super.key,
+    required this.taskResponseModel,
+  });
+
+  Color _statusColor(TaskStatus status) {
+    switch (status) {
+      case TaskStatus.todo: // "To Do"
+        return const Color(0xFF64748B); // Slate Grey
+      case TaskStatus.inProgress: // "In Progress"
+        return const Color(0xFF3B82F6); // Bright Blue
+      case TaskStatus.done:
+        return const Color(0xFF10B981); // Emerald Green
+      default:
+        return Colors.black;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return "${date.day}/${date.month}/${date.year}";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _statusColor(taskResponseModel.status);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: statusColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// 🔹 Top Row (Status Badge)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  taskResponseModel.status.value.toUpperCase(),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          /// 🔹 Title
+          Text(
+            taskResponseModel.title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          const SizedBox(height: 12),
+
+          /// 🔹 Description
+          Text(
+            taskResponseModel.description,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: Colors.black87,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          const SizedBox(height: 20),
+          // const Divider(height: 1),
+          // const SizedBox(height: 15),
+
+          /// 🔹 Bottom Row (Owner + Status)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              /// Owner
+              Row(
+                children: [
+                  // const CircleAvatar(
+                  //   radius: 14,
+                  //   backgroundColor: Color(0xFF334155),
+                  //   child: Icon(Icons.person, size: 16, color: Colors.white),
+                  // ),
+                  // const SizedBox(width: 8),
+                  SizedBox(
+                    width: 110,
+                    child: Text(
+                      "Due Date:${_formatDate(taskResponseModel.dueDate!)}",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              /// Status Badge (Right)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  taskResponseModel.status.value.toUpperCase(),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

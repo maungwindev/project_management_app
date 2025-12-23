@@ -19,7 +19,7 @@ class ProjectCard extends StatelessWidget {
   final bool useInitials;
   final ProjectResponseModel projectModel;
 
-   ProjectCard({
+  ProjectCard({
     super.key,
     required this.projectModel,
     required this.priority,
@@ -38,20 +38,19 @@ class ProjectCard extends StatelessWidget {
   final controller = Get.find<ProjectController>();
 
   Color _statusColor(ProjectStatus status) {
-  switch (status) {
-    case ProjectStatus.onhold: // "To Do"
-      return const Color(0xFF64748B); // Slate Grey
-    case ProjectStatus.ongoing:    // "In Progress"
-      return const Color(0xFF3B82F6); // Bright Blue
-    case ProjectStatus.completed:
-      return const Color(0xFF10B981); // Emerald Green
-    case ProjectStatus.archived:
-      return const Color(0xFF6366F1); // Indigo
-    default:
-      return Colors.black;
+    switch (status) {
+      case ProjectStatus.onhold: // "To Do"
+        return const Color(0xFF64748B); // Slate Grey
+      case ProjectStatus.ongoing: // "In Progress"
+        return const Color(0xFF3B82F6); // Bright Blue
+      case ProjectStatus.completed:
+        return const Color(0xFF10B981); // Emerald Green
+      case ProjectStatus.archived:
+        return const Color(0xFF6366F1); // Indigo
+      default:
+        return Colors.black;
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +59,7 @@ class ProjectCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white, // Card color
-         borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.blue.shade200),
       ),
       child: Column(
@@ -71,13 +70,14 @@ class ProjectCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                 'Created By : ${ projectModel.ownerName.toUpperCase()}',
+                  'Created By : ${projectModel.ownerName.toUpperCase()}',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -87,42 +87,45 @@ class ProjectCard extends StatelessWidget {
               ),
               // const Icon(Icons.more_horiz, color: Colors.grey),
               PopupMenuButton<int>(
-              offset: const Offset(0, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              itemBuilder: (context) => [
-                // const PopupMenuDivider(),
-                PopupMenuItem(
-                  onTap: () {
-                    // Handle logout
-                    //authController.clearUser();
-                   Get.offAllNamed('/login');
-                  },
-                  child: Row(
-                    children: const [
-                      Icon(Icons.edit, size: 18, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text("Edit"),
-                    ],
+                offset: const Offset(0, 50),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                itemBuilder: (context) => [
+                  // const PopupMenuDivider(),
+                  PopupMenuItem(
+                    onTap: () {
+                      // Handle logout
+                      //authController.clearUser();
+                      // Get.offAllNamed('/login');
+                      // _showEditDialog(context, project),
+                    },
+                    child: Row(
+                      children: const [
+                        Icon(Icons.edit, size: 18, color: Colors.black),
+                        SizedBox(width: 8),
+                        Text("Edit"),
+                      ],
+                    ),
                   ),
-                ),
-                PopupMenuDivider(),
-                PopupMenuItem(
-                  onTap: () {
-                    // Handle logout
-                    //authController.clearUser();
-                   Get.offAllNamed('/login');
-                  },
-                  child: Row(
-                    children: const [
-                      Icon(Icons.delete_forever, size: 18, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text("Delete"),
-                    ],
+                  PopupMenuDivider(),
+                  PopupMenuItem(
+                    onTap: () {
+                      // Handle logout
+                      //authController.clearUser();
+                      Get.offAllNamed('/login');
+                    },
+                    child: Row(
+                      children: const [
+                        Icon(Icons.delete_forever,
+                            size: 18, color: Colors.black),
+                        SizedBox(width: 8),
+                        Text("Delete"),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-              child:Icon(Icons.more_horiz, color: Colors.grey) ,
-            ),
+                ],
+                child: Icon(Icons.more_horiz, color: Colors.grey),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -174,54 +177,53 @@ class ProjectCard extends StatelessWidget {
                   // ),
 
                   Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  // Using .withOpacity() to get that soft pastel look from the image
-                                  color: _statusColor(projectModel.status)
-                                      .withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(
-                                      8), // More rectangular like the image
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<ProjectStatus>(
-                                    focusColor: Colors.transparent,
-                                    value: projectModel.status,
-                                    // Re-enable and style the icon
-                                    icon: Icon(
-                                      Icons.keyboard_arrow_down,
-                                      color: _statusColor(projectModel.status),
-                                      size: 18,
-                                    ),
-                                    isDense: true, // Makes the button compact
-                                    dropdownColor: Colors.white,
-                                    items: ProjectStatus.values.map((status) {
-                                      return DropdownMenuItem<ProjectStatus>(
-                                        value: status,
-                                        child: Text(
-                                          status.name.toUpperCase(),
-                                          style: TextStyle(
-                                            // Text color matches the primary status color
-                                            color: _statusColor(status),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (value) {
-                                      // print("value:${value}");
-                                      if (value == null) return;
-                                      // Logic remains the same
-                                      projectModel.status = value;
-                                      controller.updatedProjectStatus(
-                                        status: projectModel.status.value,
-                                        projectId: projectModel.id,
-                                      );
-                                    },
-                                  ),
-                                ),
-                              )
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      // Using .withOpacity() to get that soft pastel look from the image
+                      color: _statusColor(projectModel.status).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(
+                          8), // More rectangular like the image
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<ProjectStatus>(
+                        focusColor: Colors.transparent,
+                        value: projectModel.status,
+                        // Re-enable and style the icon
+                        icon: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: _statusColor(projectModel.status),
+                          size: 18,
+                        ),
+                        isDense: true, // Makes the button compact
+                        dropdownColor: Colors.white,
+                        items: ProjectStatus.values.map((status) {
+                          return DropdownMenuItem<ProjectStatus>(
+                            value: status,
+                            child: Text(
+                              status.name.toUpperCase(),
+                              style: TextStyle(
+                                // Text color matches the primary status color
+                                color: _statusColor(status),
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          // print("value:${value}");
+                          if (value == null) return;
+                          // Logic remains the same
+                          projectModel.status = value;
+                          controller.updatedProjectStatus(
+                            status: projectModel.status.value,
+                            projectId: projectModel.id,
+                          );
+                        },
+                      ),
+                    ),
+                  )
                 ],
               ),
             ],
@@ -236,7 +238,8 @@ class ProjectCard extends StatelessWidget {
       width: 100,
       height: 32,
       child: Stack(
-        children: List.generate(avatarCount + (extraAvatars != null ? 1 : 0), (index) {
+        children: List.generate(avatarCount + (extraAvatars != null ? 1 : 0),
+            (index) {
           if (index == avatarCount && extraAvatars != null) {
             return Positioned(
               left: index * 22.0,
@@ -245,7 +248,8 @@ class ProjectCard extends StatelessWidget {
                 backgroundColor: const Color(0xFF334155),
                 child: Text(
                   extraAvatars!,
-                  style: const TextStyle(fontSize: 12, color: Colors.blueAccent),
+                  style:
+                      const TextStyle(fontSize: 12, color: Colors.blueAccent),
                 ),
               ),
             );
@@ -259,11 +263,13 @@ class ProjectCard extends StatelessWidget {
               ),
               child: CircleAvatar(
                 radius: 14,
-                backgroundColor: useInitials ? const Color(0xFF334155) : Colors.grey,
-                child: useInitials 
-                  ? const Text("JD", style: TextStyle(fontSize: 10, color: Colors.grey))
-                  : const Icon(Icons.person, size: 18, color: Colors.white), 
-                  // Replace Icon with NetworkImage in a real app
+                backgroundColor:
+                    useInitials ? const Color(0xFF334155) : Colors.grey,
+                child: useInitials
+                    ? const Text("JD",
+                        style: TextStyle(fontSize: 10, color: Colors.grey))
+                    : const Icon(Icons.person, size: 18, color: Colors.white),
+                // Replace Icon with NetworkImage in a real app
               ),
             ),
           );

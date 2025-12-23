@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/project_controller.dart';
 import 'package:pm_app/controller/project_ui_controller.dart';
+import 'package:pm_app/core/component/custom_Inputdecoration.dart';
 import 'package:pm_app/core/utils/snackbar.dart';
 import 'package:pm_app/models/response_models/project_model.dart';
 import 'package:pm_app/view/home/project_card.dart';
@@ -335,13 +336,27 @@ class _ProjectScreenState extends State<ProjectScreen> {
           children: [
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+              decoration:  buildInputDecoration(hintText: 'Title',isPrefix: false),
             ),
             const SizedBox(height: 10),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
+            Container(
+                      height: 150,
+                      // decoration: BoxDecoration(
+                      //   border: Border.all(color: Colors.grey),
+                      //   borderRadius: BorderRadius.circular(12),
+                      // ),
+                      child: TextField(
+                        controller: descController,
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        decoration: buildInputDecoration(
+                          hintText: 'Add details...',
+                          isPrefix: false,
+                        ),
+                      ),
+                    ),
+            
           ],
         ),
         actions: [

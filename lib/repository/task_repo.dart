@@ -133,4 +133,9 @@ class TaskRepository {
       (success) => Right(success),
     );
   }
+
+  Stream<Either<String, List<TaskResponseModel>>> getTodayTasksForDashboard() {
+  return taskService.getTodayTasksForDashboard();
+}
+
 }

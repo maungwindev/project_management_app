@@ -40,6 +40,7 @@ class TaskService {
   final taskRef = _taskRef(projectId).doc();
 
   tx.set(taskRef, {
+    'projectId': projectId,
     'title': title,
     'description': description,
     'status': status,
@@ -210,5 +211,35 @@ Future<Either<String, String>> removeAssignee({
     return Left('Failed to remove assignee');
   }
 }
+
+Stream<Either<String, List<TaskResponseModel>>> getTodayTasksForDashboard() {
+  final uid = FirebaseAuth.instance.currentUser!.uid;
+  final now = DateTime.now();
+  final startOfDay = DateTime(now.year, now.month, now.day);
+  final endOfDay = startOfDay.add(const Duration(days: 1));
+
+  return firestore
+      .collectionGroup('tasks') // 🔥 IMPORTANT
+      .where('dueDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+      .where('dueDate', isLessThan: Timestamp.fromDate(endOfDay))
+      .orderBy('dueDate')
+      .snapshots()
+      .map<Either<String, List<TaskResponseModel>>>((snapshot) {
+        try {
+          final tasks = snapshot.docs
+              .map((doc) => TaskResponseModel.fromFirestore(doc.id, doc.data()))
+              .where((task) {
+                // user must be owner or assignee
+                return task.assignees.contains(uid);
+              })
+              .toList();
+
+          return Right(tasks);
+        } catch (e) {
+          return Left('Failed to parse dashboard tasks: $e');
+        }
+      });
+}
+
 
 }
