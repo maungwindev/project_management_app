@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pm_app/controller/connection_controller.dart';
 import 'package:pm_app/controller/project_controller.dart';
 import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/core/component/custom_Inputdecoration.dart';
@@ -17,6 +18,7 @@ class ProjectScreen extends StatefulWidget {
 
 class _ProjectScreenState extends State<ProjectScreen> {
   final controller = Get.find<ProjectController>();
+  final InternetConnectionController internetController = Get.find();
   late final ProjectUIController uiController;
   late Worker _createDialogWorker;
 
@@ -28,8 +30,6 @@ class _ProjectScreenState extends State<ProjectScreen> {
         return const Color(0xFF3B82F6); // Bright Blue
       case ProjectStatus.completed:
         return const Color(0xFF10B981); // Emerald Green
-      case ProjectStatus.archived:
-        return const Color(0xFF6366F1); // Indigo
       default:
         return Colors.black;
     }
@@ -214,12 +214,33 @@ class _ProjectScreenState extends State<ProjectScreen> {
           children: [
             const SizedBox(height: 20),
             // Header
-            const Text(
-              'My Projects',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'My Projects',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                 Obx((){
+                    switch(internetController.status.value){
+                      case InternetStatus.disconnected:
+                      return Icon(Icons.wifi_off_outlined);
+                      case InternetStatus.connected:
+                      return SizedBox.shrink();
+                      
+                      case InternetStatus.initial:
+                        // TODO: Handle this case.
+                        return SizedBox.shrink();
+                      case InternetStatus.loading:
+                        // TODO: Handle this case.
+                        return SizedBox.shrink();
+                    }
+                  }),
+              ],
             ),
             const SizedBox(height: 25),
 
@@ -230,9 +251,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 child: Row(
                   children: [
                     _buildFilterTab("All"),
+                    _buildFilterTab("On Hold"),
                     _buildFilterTab("Ongoing"),
                     _buildFilterTab("Completed"),
-                    _buildFilterTab("On Hold"),
+                    
                   ],
                 ),
               );
@@ -285,6 +307,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         status: project.status.name.toUpperCase(),
                         statusColor: Colors.blue,
                         avatarCount: project.members.length,
+                        onEdit: ()=>_showEditDialog(context, project),
+                        onDelete: (){
+                          controller.deleteProject(
+                                projectId: project.id
+                              );
+                        },
                       ),
                     );
                   }).toList(),
@@ -305,7 +333,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF3B82F6) : Colors.white,
+          color: isActive ? Colors.blue : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: isActive
               ? Border.all(color: Colors.transparent)
@@ -368,11 +396,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 onPressed: controller.isCreating.value
                     ? null
                     : () async {
+                       Get.back();
                         await controller.createProject(
                           title: titleController.text,
                           description: descController.text,
                         );
-                        Get.back();
+                       
 
                         if (controller.successMessage.isNotEmpty) {
                           showMaterialSnackBar(context, controller.successMessage.value);
@@ -413,12 +442,26 @@ class _ProjectScreenState extends State<ProjectScreen> {
           children: [
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+              decoration:  buildInputDecoration(hintText: 'Title',isPrefix: false),
             ),
             const SizedBox(height: 10),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(labelText: 'Description'),
+            Container(
+                      height: 150,
+                      // decoration: BoxDecoration(
+                      //   border: Border.all(color: Colors.grey),
+                      //   borderRadius: BorderRadius.circular(12),
+                      // ),
+                      child: TextField(
+                        controller: descController,
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                        decoration: buildInputDecoration(
+                          hintText: 'Add details...',
+                          isPrefix: false,
+                        ),
+                      ),
+                    
             ),
           ],
         ),
@@ -431,7 +474,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
             onPressed: () async {
               project.title = titleController.text;
               project.description = descController.text;
-              controller.update();
+              controller.updateProject(title: project.title, description: project.description, projectId:project.id);
 
               Get.back();
 

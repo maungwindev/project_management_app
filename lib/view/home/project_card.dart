@@ -18,6 +18,8 @@ class ProjectCard extends StatelessWidget {
   final bool isDone;
   final bool useInitials;
   final ProjectResponseModel projectModel;
+  final Function onEdit;
+  final Function onDelete;
 
   ProjectCard({
     super.key,
@@ -33,6 +35,8 @@ class ProjectCard extends StatelessWidget {
     this.extraAvatars,
     this.isDone = false,
     this.useInitials = false,
+    required this.onEdit,
+    required this.onDelete
   });
 
   final controller = Get.find<ProjectController>();
@@ -44,10 +48,8 @@ class ProjectCard extends StatelessWidget {
       case ProjectStatus.ongoing: // "In Progress"
         return const Color(0xFF3B82F6); // Bright Blue
       case ProjectStatus.completed:
-        return const Color(0xFF10B981); // Emerald Green
-      case ProjectStatus.archived:
-        return const Color(0xFF6366F1); // Indigo
-      default:
+        return const Color(0xFF10B981); // Emerald Green 
+     default:
         return Colors.black;
     }
   }
@@ -73,7 +75,7 @@ class ProjectCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: Colors.blue,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -93,12 +95,7 @@ class ProjectCard extends StatelessWidget {
                 itemBuilder: (context) => [
                   // const PopupMenuDivider(),
                   PopupMenuItem(
-                    onTap: () {
-                      // Handle logout
-                      //authController.clearUser();
-                      // Get.offAllNamed('/login');
-                      // _showEditDialog(context, project),
-                    },
+                    onTap: ()=>onEdit(),
                     child: Row(
                       children: const [
                         Icon(Icons.edit, size: 18, color: Colors.black),
@@ -109,11 +106,7 @@ class ProjectCard extends StatelessWidget {
                   ),
                   PopupMenuDivider(),
                   PopupMenuItem(
-                    onTap: () {
-                      // Handle logout
-                      //authController.clearUser();
-                      Get.offAllNamed('/login');
-                    },
+                    onTap: () =>onDelete(),
                     child: Row(
                       children: const [
                         Icon(Icons.delete_forever,
@@ -201,7 +194,7 @@ class ProjectCard extends StatelessWidget {
                           return DropdownMenuItem<ProjectStatus>(
                             value: status,
                             child: Text(
-                              status.name.toUpperCase(),
+                              status.displayName,
                               style: TextStyle(
                                 // Text color matches the primary status color
                                 color: _statusColor(status),

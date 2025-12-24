@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pm_app/controller/connection_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
 import 'package:pm_app/core/component/custom_Inputdecoration.dart';
 import 'package:pm_app/core/component/loading_widget.dart';
+import 'package:pm_app/core/utils/snackbar.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -19,6 +21,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController confirmpasswordController =
       TextEditingController();
   final UserController userController = Get.find<UserController>();
+  
+  final InternetConnectionController internetController = Get.find();
 
   bool isLoading = false;
   bool isObscured = false;
@@ -170,19 +174,79 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 24),
                   Obx(() {
-                    return SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed:
-                            userController.isRegister.value ? null : register,
-                        child: userController.isRegister.value
-                            ? LoadingWidget()
-                            : const Text('Register',
-                                style: TextStyle(fontSize: 16)),
-                      ),
-                    );
+                    switch (internetController.status.value) {
+                      case InternetStatus.disconnected:
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed:(){
+                              showMaterialSnackBar(context, 'Check Your Internet!');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              // backgroundColor: _backgroundColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              elevation: 0,
+                            ),
+                            child:  const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Register',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      // SizedBox(width: 8),
+                                      // Icon(Icons.arrow_forward_rounded),
+                                    ],
+                                  ),
+                          ),
+                        );
+                      case InternetStatus.connected:
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed:  userController.isRegister.value ? null : register,
+                            style: ElevatedButton.styleFrom(
+                              // backgroundColor: _backgroundColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: userController.isRegister.value
+                                ? LoadingWidget()
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Register',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      // SizedBox(width: 8),
+                                      // Icon(Icons.arrow_forward_rounded),
+                                    ],
+                                  ),
+                          ),
+                        );
+                      case InternetStatus.loading:
+                        return LoadingWidget();
+                      case InternetStatus.initial:
+                        // TODO: Handle this case.
+                        return const SizedBox.shrink();
+                    }
                   }),
+                 
 
                   const SizedBox(height: 16),
                   SizedBox(

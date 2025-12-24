@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/auth_controller.dart';
+import 'package:pm_app/controller/connection_controller.dart';
 import 'package:pm_app/controller/project_controller.dart';
 import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/controller/task_controller.dart';
@@ -22,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final projectController = Get.find<ProjectController>();
   final taskController = Get.find<TaskController>();
   int selectedIndex = 0;
+  late final DashboardContent dashboardContent;
 
   final List<String> menuItems = [
     'Dashboard',
@@ -35,11 +37,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    dashboardContent = DashboardContent(
+      projectController: projectController,
+      taskController: taskController,
+    );
     pages = [
-      DashboardContent(
-        projectController: projectController,
-        taskController: taskController,
-      ),
+      dashboardContent,
       const ProjectScreen(),
       const SizedBox(
         child: Center(
@@ -306,18 +309,19 @@ class DashboardContent extends StatefulWidget {
 }
 
 class _DashboardContentState extends State<DashboardContent> {
+  
+  final InternetConnectionController internetController = Get.find();
   @override
   void initState() {
     super.initState();
 
-    // Wait until first frame to avoid context issues
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Initial load
       _loadTodayTasks();
-      // Listen for project list changes if loaded asynchronously
+
+      // Listen for changes in project list
       widget.projectController.projectList.listen((projects) {
-        if (projects.isNotEmpty) {
-          _loadTodayTasks();
-        }
+        _loadTodayTasks();
       });
     });
   }
@@ -339,14 +343,35 @@ class _DashboardContentState extends State<DashboardContent> {
   Widget _mobileView() {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Project Overview",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Project Overview",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+
+                  Obx((){
+                    switch(internetController.status.value){
+                      case InternetStatus.disconnected:
+                      return Icon(Icons.wifi_off_outlined);
+                      case InternetStatus.connected:
+                      return SizedBox.shrink();
+                      
+                      case InternetStatus.initial:
+                        // TODO: Handle this case.
+                        return SizedBox.shrink();
+                      case InternetStatus.loading:
+                        // TODO: Handle this case.
+                        return SizedBox.shrink();
+                    }
+                  }),
+                ],
               ),
               const SizedBox(height: 8),
               const Text(
@@ -359,9 +384,21 @@ class _DashboardContentState extends State<DashboardContent> {
               Obx(() {
                 final projects = widget.projectController.projectList;
                 if (projects.isEmpty) {
-                  return const SizedBox(
+                  return SizedBox(
                     height: 220,
-                    child: Center(child: Text("No projects found")),
+                    child: Center(
+                        child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/empty_project.png',
+                          width: 100,
+                          height: 100,
+                        ),
+                        Text("No projects found"),
+                      ],
+                    )),
                   );
                 }
 
@@ -388,9 +425,15 @@ class _DashboardContentState extends State<DashboardContent> {
 
               // Tasks Today
               const Text(
-                "Tasks Today",
+                "Today Tasks",
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 8),
+              const Text(
+                "Check for today tasks which is priority of your task.",
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
               Obx(() {
                 if (widget.taskController.isDashboardLoading.value) {
                   return const Center(child: CircularProgressIndicator());
@@ -398,7 +441,22 @@ class _DashboardContentState extends State<DashboardContent> {
 
                 final todayTasks = widget.taskController.todayTasks;
                 if (todayTasks.isEmpty) {
-                  return const Text("No tasks due today");
+                  return SizedBox(
+                    height: 220,
+                    child: Center(
+                        child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/empty_task.png',
+                          width: 100,
+                          height: 80,
+                        ),
+                        Text("Good News! Today, you haven't tasks"),
+                      ],
+                    )),
+                  );
                 }
 
                 return ListView.builder(
@@ -472,7 +530,6 @@ class _DashboardContentState extends State<DashboardContent> {
   }
 }
 
-
 // Card Widget
 class IntegrationCard extends StatelessWidget {
   final ProjectResponseModel projectResponseModel;
@@ -486,8 +543,6 @@ class IntegrationCard extends StatelessWidget {
         return const Color(0xFF3B82F6); // Bright Blue
       case ProjectStatus.completed:
         return const Color(0xFF10B981); // Emerald Green
-      case ProjectStatus.archived:
-        return const Color(0xFF6366F1); // Indigo
       default:
         return Colors.black;
     }

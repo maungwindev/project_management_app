@@ -54,6 +54,31 @@ class ProjectService {
     }
   }
 
+  Future<Either<String, String>> updateProject({
+    required String projectId,
+    required String title,
+    required String description,
+  }) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(projectId)
+          .update({
+            'title': title,
+            'description':description,
+            'updatedAt': FieldValue.serverTimestamp()
+            });
+
+      logService.logInfo("Success");
+      return const Right('Project Updated Successfully!');
+
+    } on FirebaseException catch (e) {
+      return Left('Failed to create project: ${e.message}');
+    } catch (e) {
+      return Left('Unexpected error: $e');
+    }
+  }
+
   Stream<Either<String, List<ProjectResponseModel>>> getProjects() {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
@@ -99,6 +124,19 @@ class ProjectService {
     } catch (e) {
       logService.logError('Unexpected error: $e');
       return Left('Unexpected error: $e');
+    }
+  }
+
+  Future<Either<String, String>> deleteProject({
+    required String projectId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(projectId).delete();
+      return const Right('Project deleted successfully');
+    } catch (e) {
+      return Left('Failed to delete task');
     }
   }
 }

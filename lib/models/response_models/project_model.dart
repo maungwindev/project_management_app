@@ -1,4 +1,4 @@
-enum ProjectStatus { onhold, ongoing, completed, archived }
+enum ProjectStatus { onhold, ongoing, completed }
 
 extension ProjectStatusX on ProjectStatus {
   /// save to Firestore
@@ -10,6 +10,19 @@ extension ProjectStatusX on ProjectStatus {
       (e) => e.name == value,
       orElse: () => ProjectStatus.onhold,
     );
+  }
+}
+
+extension ProjectStatusExtension on ProjectStatus {
+  String get displayName {
+    switch (this) {
+      case ProjectStatus.onhold:
+        return "On Hold";
+      case ProjectStatus.ongoing:
+        return "Ongoing";
+      case ProjectStatus.completed:
+        return "Completed";
+    }
   }
 }
 

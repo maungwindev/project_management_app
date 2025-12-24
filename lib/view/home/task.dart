@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pm_app/controller/connection_controller.dart';
 import 'package:pm_app/controller/task_controller.dart';
 import 'package:pm_app/controller/task_ui_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
@@ -17,6 +18,7 @@ class TaskScreen extends StatefulWidget {
 class _TaskScreenState extends State<TaskScreen> {
   final TaskController controller = Get.find<TaskController>();
   final UserController userController = Get.find<UserController>();
+  final InternetConnectionController internetController = Get.find();
   late final String projectId;
   late final String ownerId;
 
@@ -75,27 +77,59 @@ class _TaskScreenState extends State<TaskScreen> {
   // ================= MOBILE VIEW =================
   Widget _mobileView() {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tasks')), floatingActionButton: FloatingActionButton( onPressed: () { Get.toNamed('/create-task', arguments: { 'projectId': projectId, 'task': null, }); }, child: const Icon(Icons.add), ),
+      appBar: AppBar(
+        title: const Text('Tasks'),
+        actions: [
+          Obx(() {
+            switch (internetController.status.value) {
+              case InternetStatus.disconnected:
+                return Padding(
+                  padding: const EdgeInsets.only(right: 30),
+                  child: Icon(Icons.wifi_off_outlined),
+                );
+              case InternetStatus.connected:
+                return SizedBox.shrink();
+
+              case InternetStatus.initial:
+                // TODO: Handle this case.
+                return SizedBox.shrink();
+              case InternetStatus.loading:
+                // TODO: Handle this case.
+                return SizedBox.shrink();
+            }
+          }),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Get.toNamed('/create-task', arguments: {
+            'projectId': projectId,
+            'task': null,
+          });
+        },
+        child: const Icon(Icons.add),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             children: [
-             
               const SizedBox(height: 20),
-      
+
               // ---------------- FILTER TABS ----------------
               Obx(() {
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: ['All', 'To Do', 'In Progress', 'Done'].map((label) {
+                    children:
+                        ['All', 'To Do', 'In Progress', 'Done'].map((label) {
                       final isActive = selectedFilter.value == label;
                       return GestureDetector(
                         onTap: () => selectedFilter.value = label,
                         child: Container(
                           margin: const EdgeInsets.only(right: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
                           decoration: BoxDecoration(
                             color: isActive ? Colors.blue : Colors.white,
                             borderRadius: BorderRadius.circular(16),
@@ -107,7 +141,9 @@ class _TaskScreenState extends State<TaskScreen> {
                             label,
                             style: TextStyle(
                               color: isActive ? Colors.white : Colors.black,
-                              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: isActive
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
@@ -117,7 +153,7 @@ class _TaskScreenState extends State<TaskScreen> {
                 );
               }),
               const SizedBox(height: 15),
-      
+
               // ---------------- TASK LIST ----------------
               Expanded(
                 child: Obx(() {
@@ -127,7 +163,7 @@ class _TaskScreenState extends State<TaskScreen> {
                   if (controller.errorMessage.isNotEmpty) {
                     return Center(child: Text(controller.errorMessage.value));
                   }
-      
+
                   final filteredTasks = controller.taskList.where((task) {
                     switch (selectedFilter.value) {
                       case 'All':
@@ -142,11 +178,11 @@ class _TaskScreenState extends State<TaskScreen> {
                         return true;
                     }
                   }).toList();
-      
+
                   if (filteredTasks.isEmpty) {
                     return const Center(child: Text('No tasks found'));
                   }
-      
+
                   return ListView.builder(
                     padding: const EdgeInsets.all(10),
                     itemCount: filteredTasks.length,
@@ -154,9 +190,9 @@ class _TaskScreenState extends State<TaskScreen> {
                       final task = filteredTasks[index];
                       return TaskCard(
                         currentUserId: userController.currentUserInfo.value!.id,
-                        ownerId:ownerId,
+                        ownerId: ownerId,
                         projectId: projectId,
-                        priority: task.priority.name,
+                        priority: task.priority.displayName,
                         priorityBg: getPriorityBg(task.priority),
                         priorityText: getPriorityTextColor(task.priority),
                         title: task.title,
@@ -166,8 +202,10 @@ class _TaskScreenState extends State<TaskScreen> {
                         avatarCount: task.assignees.length,
                         taskModel: task,
                         onEdit: () {
-                          Get.toNamed('/create-task',
-                              arguments: {'projectId': projectId, 'task': task});
+                          Get.toNamed('/create-task', arguments: {
+                            'projectId': projectId,
+                            'task': task
+                          });
                         },
                       );
                     },
@@ -198,7 +236,8 @@ class _TaskScreenState extends State<TaskScreen> {
                     onTap: () => selectedFilter.value = label,
                     child: Container(
                       margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
                         color: isActive ? Colors.blue : Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -210,7 +249,8 @@ class _TaskScreenState extends State<TaskScreen> {
                         label,
                         style: TextStyle(
                           color: isActive ? Colors.white : Colors.black,
-                          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isActive ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                     ),
@@ -325,7 +365,8 @@ class _TaskScreenState extends State<TaskScreen> {
                 child: CircleAvatar(
                   radius: 16,
                   backgroundColor: Colors.blueGrey,
-                  child: const Icon(Icons.person, size: 16, color: Colors.white),
+                  child:
+                      const Icon(Icons.person, size: 16, color: Colors.white),
                 ),
               ))
           .toList(),

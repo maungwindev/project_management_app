@@ -36,37 +36,33 @@ class TaskService {
   required DateTime dueDate,
 }) async {
   try {
-   await firestore.runTransaction((tx) async {
-  final taskRef = _taskRef(projectId).doc();
+    final taskRef = _taskRef(projectId).doc();
 
-  tx.set(taskRef, {
-    'projectId': projectId,
-    'title': title,
-    'description': description,
-    'status': status,
-    'priority': priority,
-    'assignees': assignees,
-    'dueDate': Timestamp.fromDate(dueDate),
-    'createdAt': FieldValue.serverTimestamp(),
-    'updatedAt': FieldValue.serverTimestamp(),
-  });
+    await taskRef.set({
+      'projectId': projectId,
+      'title': title,
+      'description': description,
+      'status': status,
+      'priority': priority,
+      'assignees': assignees,
+      'dueDate': Timestamp.fromDate(dueDate),
 
-  tx.update(
-    firestore.collection('projects').doc(projectId),
-    {
+      // 🔥 MUST be client timestamps
+      'createdAt': Timestamp.now(),
+      'updatedAt': Timestamp.now(),
+    });
+
+    // OPTIONAL — sync project members later
+    firestore.collection('projects').doc(projectId).update({
       'members': FieldValue.arrayUnion(assignees),
-    },
-  );
-});
-
-
+    });
 
     return const Right('Task created successfully');
   } catch (e) {
-    logger.logError('Create Task Error: $e');
     return Left('Failed to create task');
   }
 }
+
 
 
   // ---------------- READ TASKS (STREAM) ----------------
@@ -81,7 +77,7 @@ class TaskService {
       .doc(projectId)
       .collection('tasks')
       .orderBy('createdAt', descending: true)
-      .snapshots()
+      .snapshots(includeMetadataChanges: true)
       .map<Either<String, List<TaskResponseModel>>>((snapshot) {
         try {
           final tasks = snapshot.docs.map((doc) {
@@ -158,29 +154,23 @@ class TaskService {
   required String userId,
 }) async {
   try {
-    
-    final _projectRef = firestore.collection('projects').doc(projectId);
-
-    await firestore.runTransaction((transaction) async {
-      // add assignee to task
-      transaction.update(_taskRef(projectId).doc(taskId), {
-        'assignees': FieldValue.arrayUnion([userId]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // ensure user is project member
-      transaction.update(_projectRef, {
-        'members': FieldValue.arrayUnion([userId]),
-      });
+    // 1️⃣ Update task locally (offline-safe)
+    await _taskRef(projectId).doc(taskId).update({
+      'assignees': FieldValue.arrayUnion([userId]),
+      'updatedAt': Timestamp.now(),
     });
 
+    // 2️⃣ Update project members (best-effort)
+    firestore.collection('projects').doc(projectId).update({
+      'members': FieldValue.arrayUnion([userId]),
+    });
 
     return const Right('Assignee added');
   } catch (e) {
-    logger.logError('Add Assignee Error: $e');
     return Left('Failed to add assignee');
   }
 }
+
 
 
 Future<Either<String, String>> removeAssignee({
@@ -189,28 +179,21 @@ Future<Either<String, String>> removeAssignee({
   required String userId,
 }) async {
   try {
+    await _taskRef(projectId).doc(taskId).update({
+      'assignees': FieldValue.arrayRemove([userId]),
+      'updatedAt': Timestamp.now(),
+    });
 
-    final _projectRef = firestore.collection('projects').doc(projectId);
-
-    await firestore.runTransaction((transaction) async {
-      // add assignee to task
-      transaction.update(_taskRef(projectId).doc(taskId), {
-        'assignees': FieldValue.arrayRemove([userId]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // ensure user is project member
-      transaction.update(_projectRef, {
-        'members': FieldValue.arrayRemove([userId]),
-      });
+    firestore.collection('projects').doc(projectId).update({
+      'members': FieldValue.arrayRemove([userId]),
     });
 
     return const Right('Assignee removed');
   } catch (e) {
-    logger.logError('Remove Assignee Error: $e');
     return Left('Failed to remove assignee');
   }
 }
+
 
 Stream<Either<String, List<TaskResponseModel>>> getTodayTasksForDashboard() {
   final uid = FirebaseAuth.instance.currentUser!.uid;

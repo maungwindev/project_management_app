@@ -81,7 +81,7 @@ class TaskCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  priority.toUpperCase(),
+                  priority,
                   style: TextStyle(
                     color: priorityText,
                     fontSize: 10,
@@ -209,7 +209,7 @@ class TaskCard extends StatelessWidget {
                                       return DropdownMenuItem<TaskStatus>(
                                         value: status,
                                         child: Text(
-                                          status.name.toUpperCase(),
+                                          status.displayName,
                                           style: TextStyle(
                                             // Text color matches the primary status color
                                             color: _statusColor(status),

@@ -55,7 +55,7 @@ class ProjectController extends GetxController {
     required String title,
     required String description,
   }) async {
-    isCreating.value = true;
+    // isCreating.value = true;
     successMessage.value = '';
     errorMessage.value = '';
 
@@ -64,12 +64,39 @@ class ProjectController extends GetxController {
       description: description,
     );
 
+    // isCreating.value = false;
+
     result.fold(
       (error) => errorMessage.value = error,
       (success) => successMessage.value = success,
     );
 
-    isCreating.value = false;
+    
+  }
+
+   Future<void> updateProject({
+    required String title,
+    required String description,
+    required String projectId
+  }) async {
+    // isCreating.value = true;
+    successMessage.value = '';
+    errorMessage.value = '';
+
+    final result = await projectRepository.updateProject(
+      projectId: projectId,
+      title: title,
+      description: description,
+    );
+
+    // isCreating.value = false;
+
+    result.fold(
+      (error) => errorMessage.value = error,
+      (success) => successMessage.value = success,
+    );
+
+    
   }
 
   Future<void> updatedProjectStatus(
@@ -82,6 +109,22 @@ class ProjectController extends GetxController {
           successMessage.value = '';
 
           });
+  }
+
+  Future<void> deleteProject({
+    required String projectId
+  }) async {
+    final result = await projectRepository.deleteTask(
+      projectId: projectId
+    );
+
+    result.fold(
+      (error) => errorMessage.value = error,
+      (_) {
+        projectList.refresh();
+        successMessage.value = 'Project deleted';
+      },
+    );
   }
 
   @override

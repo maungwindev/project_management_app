@@ -16,12 +16,40 @@ extension TaskStatusX on TaskStatus {
   }
 }
 
+extension TaskStatusExtension on TaskStatus {
+  String get displayName {
+    switch (this) {
+      case TaskStatus.todo:
+        return "To Do";
+      case TaskStatus.inProgress:
+        return "In Progress";
+      case TaskStatus.done:
+        return "Done";
+    }
+  }
+}
+
+
+extension TaskPriorityExtension on TaskPriority {
+  String get displayName {
+    switch (this) {
+      case TaskPriority.low:
+        return "Low";
+      case TaskPriority.medium:
+        return "Medium";
+      case TaskPriority.high:
+        return "High";
+    }
+  }
+}
+
 class TaskResponseModel {
   final String id;
   final String title;
   final String description;
    TaskStatus status;
   final TaskPriority priority;
+  final String projectId;
   final List<String> assignees;
   final DateTime? dueDate;
   final DateTime? createdAt;
@@ -33,6 +61,7 @@ class TaskResponseModel {
     required this.description,
     required this.status,
     required this.priority,
+    required this.projectId,
     required this.assignees,
     this.dueDate,
     this.createdAt,
@@ -48,6 +77,7 @@ class TaskResponseModel {
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       status: TaskStatusX.fromValue(data['status']),
+      projectId:data['projectId'] ?? '',
       priority: _parsePriority(data['priority']),
       assignees: List<String>.from(data['assignees'] ?? []),
       dueDate: data['dueDate'] is Timestamp

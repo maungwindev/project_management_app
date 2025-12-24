@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/auth_controller.dart';
+import 'package:pm_app/controller/connection_controller.dart';
 import 'package:pm_app/core/component/custom_Inputdecoration.dart';
 import 'package:pm_app/core/component/loading_widget.dart';
 import 'package:pm_app/core/utils/snackbar.dart';
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final AuthController authController = Get.find<AuthController>();
+  final InternetConnectionController internetController = Get.find();
 
   bool isLoading = false;
 
@@ -40,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
       if (success) {
         Get.offAllNamed('/home');
 
-        showMaterialSnackBar(context,'Login successful');
+        showMaterialSnackBar(context, 'Login successful');
 
         // Future.delayed(const Duration(milliseconds: 300), () {
         //   Get.snackbar(
@@ -51,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
         //   );
         // });
       } else {
-          showMaterialSnackBar(context,authController.errorValue.value);
+        showMaterialSnackBar(context, authController.errorValue.value);
         // WidgetsBinding.instance.addPostFrameCallback((_){
         //   Get.snackbar(
         //   'Login Failed',
@@ -167,39 +169,79 @@ class _LoginPageState extends State<LoginPage> {
                   // }),
 
                   Obx(() {
-                    return SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        
-                         onPressed:
-                          authController.isLoading.value ? null : ()=>login(context),
-                        style: ElevatedButton.styleFrom(
-                          // backgroundColor: _backgroundColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: authController.isLoading.value
-                            ? LoadingWidget()
-                            : const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Log In',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  // SizedBox(width: 8),
-                                  // Icon(Icons.arrow_forward_rounded),
-                                ],
+                    switch (internetController.status.value) {
+                      case InternetStatus.disconnected:
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed:(){
+                              showMaterialSnackBar(context, 'Check Your Internet!');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              // backgroundColor: _backgroundColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
                               ),
-                      ),
-                    );
+                              elevation: 0,
+                            ),
+                            child:  const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Log In',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      // SizedBox(width: 8),
+                                      // Icon(Icons.arrow_forward_rounded),
+                                    ],
+                                  ),
+                          ),
+                        );
+                      case InternetStatus.connected:
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: authController.isLoading.value
+                                ? null
+                                : () => login(context),
+                            style: ElevatedButton.styleFrom(
+                              // backgroundColor: _backgroundColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: authController.isLoading.value
+                                ? LoadingWidget()
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Log In',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      // SizedBox(width: 8),
+                                      // Icon(Icons.arrow_forward_rounded),
+                                    ],
+                                  ),
+                          ),
+                        );
+                      case InternetStatus.loading:
+                        return LoadingWidget();
+                      case InternetStatus.initial:
+                        // TODO: Handle this case.
+                        return const SizedBox.shrink();
+                    }
                   }),
 
                   const SizedBox(height: 18),

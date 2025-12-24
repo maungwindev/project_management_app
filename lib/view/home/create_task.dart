@@ -174,6 +174,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 onPressed: controller.isCreating.value
                     ? null
                     : () async {
+                      Get.back();
                         if (isEdit) {
                           // 🔁 UPDATE
                           await controller.updateTask(
@@ -206,7 +207,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                         }
 
                         controller.selectedAssignees.clear();
-                        Get.back();
+                        
                       },
                 child: controller.isCreating.value?LoadingWidget():
                 Text(

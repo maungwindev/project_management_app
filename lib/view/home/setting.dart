@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/auth_controller.dart';
+import 'package:pm_app/controller/connection_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
+import 'package:pm_app/core/const/size_const.dart';
 
 class SettingScreen extends StatelessWidget {
   const SettingScreen({super.key});
@@ -10,6 +12,8 @@ class SettingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final userController = Get.find<UserController>();
     final authController = Get.find<AuthController>();
+    
+  final InternetConnectionController internetController = Get.find();
 
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -30,6 +34,7 @@ class SettingScreen extends StatelessWidget {
                   email,
                   firstLetter,
                   authController,
+                  internetController
                 )
               : Center(child: Text("Maintaince"),)
         ),
@@ -110,49 +115,92 @@ class SettingScreen extends StatelessWidget {
     String email,
     String firstLetter,
     AuthController authController,
+    InternetConnectionController internetController
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Avatar
-        CircleAvatar(
-          radius: 32,
-          backgroundColor: Colors.blue,
-          child: Text(
-            firstLetter,
-            style: const TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+        // const SizedBox(height: 10),
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Setting',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                 Obx((){
+                    switch(internetController.status.value){
+                      case InternetStatus.disconnected:
+                      return Icon(Icons.wifi_off_outlined);
+                      case InternetStatus.connected:
+                      return SizedBox.shrink();
+                      
+                      case InternetStatus.initial:
+                        // TODO: Handle this case.
+                        return SizedBox.shrink();
+                      case InternetStatus.loading:
+                        // TODO: Handle this case.
+                        return SizedBox.shrink();
+                    }
+                  }),
+              ],
             ),
+        // Avatar
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 32,
+                backgroundColor: Colors.blue,
+                child: Text(
+                  firstLetter,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          
+          SizedBox(width: 20,),
+               // Name + Email
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                email,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          
+            ],
           ),
         ),
 
-        const SizedBox(height: 12),
-
-        // Name + Email
-        Column(
-          children: [
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              email,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-              ),
-            ),
-          ],
+        Divider(
+          thickness: SizeConst.kDividerThickness,
         ),
-
         const SizedBox(height: 20),
-
+        Spacer(),
         // Logout Button
         GestureDetector(
           onTap: () {
