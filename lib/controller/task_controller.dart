@@ -121,7 +121,7 @@ class TaskController extends GetxController {
     required List<String> assignees,
     required DateTime dueDate,
   }) async {
-    isCreating.value = true;
+    // isCreating.value = true;
     errorMessage.value = '';
     successMessage.value = '';
 
@@ -135,7 +135,7 @@ class TaskController extends GetxController {
       dueDate: dueDate,
     );
 
-    isCreating.value = false;
+    // isCreating.value = false;
     result.fold(
       (error) => errorMessage.value = error,
       (success) {

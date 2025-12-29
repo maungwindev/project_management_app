@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_it/get_it.dart';
 import 'package:pm_app/controller/auth_controller.dart';
 import 'package:pm_app/controller/connection_controller.dart';
 import 'package:pm_app/controller/project_controller.dart';
 import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/controller/task_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
+import 'package:pm_app/core/service/firebase_noiti_service.dart';
 import 'package:pm_app/models/response_models/project_model.dart';
 import 'package:pm_app/models/response_models/response_model.dart';
 import 'package:pm_app/view/home/project_page.dart';
@@ -22,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final uiController = Get.find<ProjectUIController>();
   final projectController = Get.find<ProjectController>();
   final taskController = Get.find<TaskController>();
+  final FirebaseNotificationService notiService = Get.find();
   int selectedIndex = 0;
   late final DashboardContent dashboardContent;
 
@@ -34,9 +37,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   late final pages;
 
+  void _requestPermission() async{
+    await notiService.requestPermission();
+     await notiService.initialize(context);
+  }
   @override
   void initState() {
     super.initState();
+    _requestPermission();
     dashboardContent = DashboardContent(
       projectController: projectController,
       taskController: taskController,
@@ -626,7 +634,7 @@ class IntegrationCard extends StatelessWidget {
 class TaskIntegrationCard extends StatelessWidget {
   final TaskResponseModel taskResponseModel;
 
-  const TaskIntegrationCard({
+   TaskIntegrationCard({
     super.key,
     required this.taskResponseModel,
   });
@@ -644,8 +652,29 @@ class TaskIntegrationCard extends StatelessWidget {
     }
   }
 
+  
+  Map<TaskPriority, Color> priorityBgColors = {
+    TaskPriority.low: const Color(0xFFDFF7DF),
+    TaskPriority.medium: const Color(0xFFFFF4E5),
+    TaskPriority.high: const Color(0xFFFDE2E2),
+  };
+
+  Map<TaskPriority, Color> priorityTextColors = {
+    TaskPriority.low: const Color(0xFF27AE60),
+    TaskPriority.medium: const Color(0xFFF2994A),
+    TaskPriority.high: const Color(0xFFEB5757),
+  };
+
+  Color getPriorityBg(TaskPriority priority) {
+    return priorityBgColors[priority] ?? Colors.grey.shade200;
+  }
+
+  Color getPriorityTextColor(TaskPriority priority) {
+    return priorityTextColors[priority] ?? Colors.black;
+  }
+
   String _formatDate(DateTime date) {
-    return "${date.day}/${date.month}/${date.year}";
+    return "${date.day} / ${date.month} / ${date.year}";
   }
 
   @override
@@ -671,13 +700,13 @@ class TaskIntegrationCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: getPriorityBg(taskResponseModel.priority),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   taskResponseModel.status.value.toUpperCase(),
                   style: TextStyle(
-                    color: statusColor,
+                    color: getPriorityTextColor(taskResponseModel.priority),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -731,9 +760,9 @@ class TaskIntegrationCard extends StatelessWidget {
                   // ),
                   // const SizedBox(width: 8),
                   SizedBox(
-                    width: 110,
+                    // width: 110,
                     child: Text(
-                      "Due Date:${_formatDate(taskResponseModel.dueDate!)}",
+                      "Due Date: ${_formatDate(taskResponseModel.dueDate!)}",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

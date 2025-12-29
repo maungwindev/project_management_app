@@ -40,4 +40,8 @@ class UserRepository {
     final result = await userService.deleteUser(userId: userId);
     return result.fold((l) => Left(l), (r) => Right(r));
   }
+
+   Future<Either<bool ,UserResponseModel>> checkUser({required String email}) async{
+    return await userService.checkUser(email: email);
+  }
 }

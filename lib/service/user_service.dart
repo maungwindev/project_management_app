@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:pm_app/models/response_models/user_model.dart';
 import 'package:pm_app/service/auth_service.dart';
 
@@ -24,7 +24,7 @@ class UserService {
 }) async {
   try {
     final userInfo = await authService.register(requestBody: requestBody);
-
+    String? token = await FirebaseMessaging.instance.getToken();
     return await userInfo.fold(
       (error) async => Left(error), // Return Left immediately on error
       (success) async {
@@ -33,6 +33,8 @@ class UserService {
         await docRef.set({
           'name': requestBody['name'],
           'email': success.email,
+          'fcm_token': token,
+          'team_members':[]
         });
         return Right('User created successfully'); // ✅ Return Right properly
       },
@@ -107,4 +109,27 @@ class UserService {
       return Left('Failed to delete user');
     }
   }
+
+  // ---------- Check User to choose as a member
+
+  Future<Either<bool, UserResponseModel>> checkUser({required String email}) async {
+  try {
+    final query = await _userRef
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+
+    if (query.docs.isEmpty) {
+      return const Left(false);
+    }
+
+ final user =
+            UserResponseModel.fromFirestore(query.docs.first.data(), query.docs.first.id);
+    print("what is first:${query.docs.first.data()}");
+    return Right(user); // UID
+  } catch (e) {
+    return const Left(false);
+  }
+}
+
 }

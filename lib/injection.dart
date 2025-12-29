@@ -9,10 +9,13 @@ import 'package:pm_app/controller/project_ui_controller.dart';
 import 'package:pm_app/controller/task_controller.dart';
 import 'package:pm_app/controller/task_ui_controller.dart';
 import 'package:pm_app/controller/user_controller.dart';
+import 'package:pm_app/core/service/firebase_noiti_service.dart';
+import 'package:pm_app/core/service/local_noti_service.dart';
 import 'package:pm_app/repository/project_repo.dart';
 import 'package:pm_app/repository/task_repo.dart';
 import 'package:pm_app/repository/user_repo.dart';
 import 'package:pm_app/service/auth_service.dart';
+import 'package:pm_app/service/connection_service.dart';
 import 'package:pm_app/service/project_service.dart';
 import 'package:pm_app/service/task_service.dart';
 import 'package:pm_app/service/user_service.dart';
@@ -32,6 +35,14 @@ class AppBindings extends Bindings {
     // 🔐 Firebase (GLOBAL)
     Get.put<FirebaseAuth>(FirebaseAuth.instance, permanent: true);
     Get.put<FirebaseFirestore>(FirebaseFirestore.instance, permanent: true);
+    Get.lazyPut(
+      () => LocalNotificationService(),
+      fenix: true,
+    );
+     Get.lazyPut(
+      () => FirebaseNotificationService(localNotificationService: Get.find()),
+      fenix: true,
+    );
 
     // 🔐 Core Utils
     Get.put<Logger>(Logger(), permanent: true);
@@ -43,7 +54,7 @@ class AppBindings extends Bindings {
 
     // 🔐 Auth Core
     Get.put<AuthService>(
-      AuthService(auth: Get.find()),
+      AuthService(auth: Get.find(),firestore: Get.find()),
       permanent: true,
     );
 
@@ -101,6 +112,13 @@ class AppBindings extends Bindings {
       fenix: true,
     );
 
+    Get.lazyPut(
+      () => ConnectionService(
+        firestore: Get.find(),
+      ),
+      fenix: true,
+    );
+
     // 📦 Repositories
     Get.lazyPut(
       () => AuthRepository(
@@ -119,7 +137,7 @@ class AppBindings extends Bindings {
       sharedPref: Get.find(),
     ), fenix: true);
 
-    Get.lazyPut(() => UserController(userRepository: Get.find(),sharedPref: Get.find()), fenix: true);
+    Get.lazyPut(() => UserController(userRepository: Get.find(),sharedPref: Get.find(),connectionService: Get.find(),notificationService: Get.find()), fenix: true);
     Get.lazyPut(() => ProjectController(projectRepository: Get.find()), fenix: true);
     Get.lazyPut(() => TaskController(
       taskRepository: Get.find(),

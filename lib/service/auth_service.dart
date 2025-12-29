@@ -1,11 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 
 class AuthService {
   final FirebaseAuth auth;
+  final FirebaseFirestore firestore;
 
-  AuthService({required this.auth});
+  AuthService({required this.auth, required this.firestore});
+
+  CollectionReference<Map<String, dynamic>> get _userRef =>
+      firestore.collection('users');
 
   /// Firebase login replacing API call
   Future<Either<String, User>> login({
@@ -14,6 +20,7 @@ class AuthService {
     try {
       final email = requestBody['email'] as String?;
       final password = requestBody['password'] as String?;
+      String? token = await FirebaseMessaging.instance.getToken();
 
       if (email == null || password == null) {
         return const Left('Email and password are required');
@@ -25,6 +32,9 @@ class AuthService {
       );
 
       if (userCredential.user != null) {
+        await _userRef.doc(userCredential.user!.uid).update({
+          'fcm_token': token,
+        });
         return Right(userCredential.user!);
       } else {
         return const Left('Login failed');

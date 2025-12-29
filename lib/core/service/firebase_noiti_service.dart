@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pm_app/core/const/firebase_const.dart';
 import 'package:pm_app/core/network/dio_client.dart';
 import 'package:pm_app/core/service/local_noti_service.dart';
@@ -104,7 +105,7 @@ class FirebaseNotificationService {
     required String body,
     required Map<String, dynamic> data,
   }) async {
-    final DioClient dioClient = GetIt.instance<DioClient>();
+    final DioClient dioClient = Get.find();
     final serverAccessTokenKey = await _getAccessToken();
 
     debugPrint("Server access token key: $serverAccessTokenKey");

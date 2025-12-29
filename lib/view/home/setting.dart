@@ -12,8 +12,8 @@ class SettingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final userController = Get.find<UserController>();
     final authController = Get.find<AuthController>();
-    
-  final InternetConnectionController internetController = Get.find();
+
+    final InternetConnectionController internetController = Get.find();
 
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -26,18 +26,14 @@ class SettingScreen extends StatelessWidget {
 
       return SafeArea(
         child: Container(
-          padding: const EdgeInsets.all(16),
-          color: Colors.white,
-          child: isMobile
-              ? _mobileLayout(
-                  displayName,
-                  email,
-                  firstLetter,
-                  authController,
-                  internetController
-                )
-              : Center(child: Text("Maintaince"),)
-        ),
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
+            child: isMobile
+                ? _mobileLayout(displayName, email, firstLetter, authController,
+                    internetController)
+                : Center(
+                    child: Text("Maintaince"),
+                  )),
       );
     });
   }
@@ -67,8 +63,7 @@ class SettingScreen extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(email,
-                      style:
-                          const TextStyle(color: Colors.grey, fontSize: 12)),
+                      style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 ],
               ),
             ),
@@ -111,45 +106,43 @@ class SettingScreen extends StatelessWidget {
   // ================= MOBILE =================
 
   Widget _mobileLayout(
-    String name,
-    String email,
-    String firstLetter,
-    AuthController authController,
-    InternetConnectionController internetController
-  ) {
+      String name,
+      String email,
+      String firstLetter,
+      AuthController authController,
+      InternetConnectionController internetController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // const SizedBox(height: 10),
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Setting',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                 Obx((){
-                    switch(internetController.status.value){
-                      case InternetStatus.disconnected:
-                      return Icon(Icons.wifi_off_outlined);
-                      case InternetStatus.connected:
-                      return SizedBox.shrink();
-                      
-                      case InternetStatus.initial:
-                        // TODO: Handle this case.
-                        return SizedBox.shrink();
-                      case InternetStatus.loading:
-                        // TODO: Handle this case.
-                        return SizedBox.shrink();
-                    }
-                  }),
-              ],
+        // Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Setting',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            Obx(() {
+              switch (internetController.status.value) {
+                case InternetStatus.disconnected:
+                  return Icon(Icons.wifi_off_outlined);
+                case InternetStatus.connected:
+                  return SizedBox.shrink();
+
+                case InternetStatus.initial:
+                  // TODO: Handle this case.
+                  return SizedBox.shrink();
+                case InternetStatus.loading:
+                  // TODO: Handle this case.
+                  return SizedBox.shrink();
+              }
+            }),
+          ],
+        ),
         // Avatar
         Padding(
           padding: const EdgeInsets.all(10.0),
@@ -167,35 +160,80 @@ class SettingScreen extends StatelessWidget {
                   ),
                 ),
               ),
-          
-          SizedBox(width: 20,),
-               // Name + Email
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+
+              SizedBox(
+                width: 20,
               ),
-              const SizedBox(height: 4),
-              Text(
-                email,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
+              // Name + Email
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          
             ],
           ),
         ),
 
+        Divider(
+          thickness: SizeConst.kDividerThickness,
+        ),
+        const SizedBox(height: 20),
+        Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "Features",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            )),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Get.toNamed('/members');
+            },
+            highlightColor: Colors.grey.withOpacity(0.1),
+            splashColor: Colors.grey.withOpacity(0.2),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: Row(
+                spacing: 20,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(Icons.group,color: Colors.grey,),
+                  Text(
+                    "Members",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  Spacer(),
+                  Icon(Icons.arrow_forward_ios_outlined)
+                ],
+              ),
+            ),
+          ),
+        ),
         Divider(
           thickness: SizeConst.kDividerThickness,
         ),
@@ -210,11 +248,11 @@ class SettingScreen extends StatelessWidget {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red),
-            ),
+            // decoration: BoxDecoration(
+            //   color: Colors.red.shade50,
+            //   borderRadius: BorderRadius.circular(12),
+            //   border: Border.all(color: Colors.red),
+            // ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

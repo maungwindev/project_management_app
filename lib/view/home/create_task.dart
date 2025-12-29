@@ -4,6 +4,7 @@ import 'package:pm_app/controller/task_controller.dart';
 import 'package:pm_app/core/component/custom_Inputdecoration.dart';
 import 'package:pm_app/core/component/loading_widget.dart';
 import 'package:pm_app/core/const/app_colors.dart';
+import 'package:pm_app/core/utils/snackbar.dart';
 import 'package:pm_app/models/response_models/response_model.dart';
 
 class NewTaskScreen extends StatefulWidget {
@@ -204,6 +205,15 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                                 controller.selectedAssignees.toList(),
                             dueDate: selectedDueDate.value,
                           );
+                        }
+
+                        
+                        if (controller.successMessage.isNotEmpty) {
+                          showMaterialSnackBar(context, controller.successMessage.value);
+                  
+                        } else if (controller.errorMessage.isNotEmpty) {
+                          showMaterialSnackBar(context, controller.errorMessage.value);
+                 
                         }
 
                         controller.selectedAssignees.clear();

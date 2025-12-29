@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 @immutable
 class FirebaseConst {
   /// Firebase Project name
-  static const projectName = "appdistributiontest-77e17";
+  static const projectName = "project-management-app-7ace8";
 
   /// Firebase service json name
   static const serviceJson = {};
