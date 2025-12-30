@@ -23,21 +23,27 @@ class ProjectService {
     }
 
     try {
-      // ✅ Fetch user ONCE
+      // ✅ Fetch user document
       final userDoc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
-      final username = userDoc.exists
-          ? UserResponseModel.fromFirestore(
-              userDoc.data()!,
-              userDoc.id,
-            ).name
+      if (!userDoc.exists || userDoc.data() == null) {
+        // Document missing or empty
+        return const Left('User data not found');
+      }
+
+      final data = userDoc.data()!;
+      logService.logInfo("User data fetched: $data");
+
+      // ✅ Safely get name
+      final username = data['name'] != null && data['name'] is String
+          ? data['name'] as String
           : 'Unknown';
 
-      // ✅ Save NORMAL String value
+      // ✅ Create project
       await FirebaseFirestore.instance.collection('projects').add({
         'ownerId': uid,
-        'ownerName': username, // ✅ String
+        'ownerName': username,
         'title': title,
         'description': description,
         'status': 'not_started',
@@ -45,7 +51,7 @@ class ProjectService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      logService.logInfo("Success");
+      logService.logInfo("Project created successfully");
       return const Right('Project Created Successfully!');
     } on FirebaseException catch (e) {
       return Left('Failed to create project: ${e.message}');
@@ -64,14 +70,13 @@ class ProjectService {
           .collection('projects')
           .doc(projectId)
           .update({
-            'title': title,
-            'description':description,
-            'updatedAt': FieldValue.serverTimestamp()
-            });
+        'title': title,
+        'description': description,
+        'updatedAt': FieldValue.serverTimestamp()
+      });
 
       logService.logInfo("Success");
       return const Right('Project Updated Successfully!');
-
     } on FirebaseException catch (e) {
       return Left('Failed to create project: ${e.message}');
     } catch (e) {
@@ -133,7 +138,8 @@ class ProjectService {
     try {
       await FirebaseFirestore.instance
           .collection('projects')
-          .doc(projectId).delete();
+          .doc(projectId)
+          .delete();
       return const Right('Project deleted successfully');
     } catch (e) {
       return Left('Failed to delete task');

@@ -243,7 +243,7 @@ class SettingScreen extends StatelessWidget {
         GestureDetector(
           onTap: () {
             authController.clearUser();
-            Get.offAllNamed('/login');
+            Get.offAllNamed('/');
           },
           child: Container(
             width: double.infinity,

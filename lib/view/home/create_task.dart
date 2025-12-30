@@ -411,7 +411,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
           );
         }),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Done')),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Done')),
         ],
       ),
     );

@@ -9,14 +9,21 @@ import 'package:pm_app/repository/user_repo.dart';
 import 'package:pm_app/service/connection_service.dart';
 import 'package:pm_app/view/home/member_page.dart';
 
+enum CheckUserStatus { idle, loading, success, error }
+
 class UserController extends GetxController {
   final UserRepository userRepository;
   final SharedPref sharedPref;
   final ConnectionService connectionService;
   final FirebaseNotificationService notificationService;
 
-  UserController({required this.userRepository, required this.sharedPref,required this.connectionService,required this.notificationService});
+  UserController(
+      {required this.userRepository,
+      required this.sharedPref,
+      required this.connectionService,
+      required this.notificationService});
 
+  // ================= EXISTING VARIABLES =================
   var isLoading = false.obs;
   var users = <UserResponseModel>[].obs;
   var currentUserInfo = Rxn<UserResponseModel>();
@@ -31,13 +38,20 @@ class UserController extends GetxController {
   StreamSubscription<Either<String, List<UserResponseModel>>>? _userSub;
   StreamSubscription<Either<String, UserResponseModel>>? _currentuserInfo;
 
+  // ================= NEW VARIABLES FOR INVITES =================
+  var pendingInvites = <Map<String, dynamic>>[].obs;
+  var inviteLoading = false.obs;
+  StreamSubscription<List<Map<String, dynamic>>>? _pendingInvitesSub;
+
   @override
   void onInit() {
     super.onInit();
     _subscribeUsers();
     _subscribeCurrentUser();
+    _subscribePendingInvites(); // NEW: subscribe to invites
   }
 
+  // ================= EXISTING METHODS =================
   void _subscribeUsers() {
     isLoading.value = true;
     _userSub?.cancel();
@@ -128,13 +142,11 @@ class UserController extends GetxController {
     result.fold((l) => errorMessage.value = l, (r) => successMessage.value = r);
   }
 
-  // ================= RESET =================
   void resetCheckUser() {
     checkUserStatus.value = CheckUserStatus.idle;
     userInfoByCheckingMember.value = null;
   }
 
-  // ================= CHECK USER =================
   Future<void> checkUser({required String email}) async {
     if (email.trim().isEmpty) return;
 
@@ -153,6 +165,7 @@ class UserController extends GetxController {
     );
   }
 
+  // ================= EXISTING INVITE METHOD =================
   Future<void> sendInvite({
     required UserResponseModel targetUser,
   }) async {
@@ -164,22 +177,55 @@ class UserController extends GetxController {
       toUid: targetUser.id,
     );
 
-
+    print("fcm token::${targetUser.fcmToken}");
     await notificationService.sendNotification(
-      deviceToken: targetUser.fcmToken,
-      title: 'New Invitation',
-      body: 'You have been invited to connect',
+      fromUid: FirebaseAuth.instance.currentUser!.uid,
+      toUid: targetUser.id,
+      title: 'Invitation Member',
+      body: 'You have been invited to connect with ${targetUser.name}',
       data: {
         'type': 'invite',
-        'fromUid': currentUid,
+        'fromUid': FirebaseAuth.instance.currentUser!.uid,
       },
     );
+  }
+
+  // ================= NEW INVITE METHODS =================
+  void _subscribePendingInvites() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    _pendingInvitesSub?.cancel();
+    _pendingInvitesSub =
+        connectionService.fetchPendingInvites(uid).listen((invites) {
+      pendingInvites.assignAll(invites);
+    });
+  }
+
+  Future<void> respondToInvite({
+    required String pairKey,
+    required bool accept,
+  }) async {
+    inviteLoading.value = true;
+    try {
+      await connectionService.respondToInvite(pairKey: pairKey, accept: accept);
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      inviteLoading.value = false;
+    }
   }
 
   @override
   void onClose() {
     _userSub?.cancel();
     _currentuserInfo?.cancel();
+    _pendingInvitesSub?.cancel();
     super.onClose();
+  }
+
+   /// Clear user
+  void clearUser() {
+    sharedPref.setString(key: sharedPref.userInfo, value: "");
   }
 }

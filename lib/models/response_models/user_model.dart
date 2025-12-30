@@ -18,8 +18,8 @@ class UserResponseModel {
       id: id,
       name: data['name'] ?? '',
       email: data['email'] ?? '',
-      fcmToken: data['fcmToken'] ?? '',
-      teamMembers: data['team_members'].isNotEmpty ? data['team_members']:[]
+      fcmToken: data['fcm_token'] ?? '',
+      teamMembers: List<String>.from(data['team_members'] ?? [])
     );
   }
 }

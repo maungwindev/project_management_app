@@ -3,76 +3,106 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class LocalNotificationService {
+  static final LocalNotificationService _instance =
+      LocalNotificationService._internal();
 
-  // Singleton instance
-  static final LocalNotificationService _instance = LocalNotificationService._internal();
-
-  // Private constructor
-  LocalNotificationService._internal();
-
-  // Factory constructor to return the singleton instance
   factory LocalNotificationService() => _instance;
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  LocalNotificationService._internal();
 
-  /// Initialize local notifications
-  Future<void> initializeLocalNotification() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  static final FlutterLocalNotificationsPlugin
+      _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  /// 🔹 Channel ID (MUST be constant)
+  static const String _channelId = 'high_importance_channel';
+  static const String _channelName = 'High Importance Notifications';
+
+  /// 🔹 Initialize (call from main & background)
+   Future<void> initialize() async {
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
-      requestCriticalPermission: true,
       requestSoundPermission: true,
     );
 
-    const initializationSettings = InitializationSettings(
+    const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (response) {
-        debugPrint("Notification payload: ${response.payload}");
-      },
+    await _flutterLocalNotificationsPlugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _onNotificationTap,
     );
+
+    await _createAndroidChannel();
   }
 
-  /// Show local notification
-  Future<void> showNotification({
+  /// 🔹 Android channel (REQUIRED)
+  static Future<void> _createAndroidChannel() async {
+    const androidChannel = AndroidNotificationChannel(
+      _channelId,
+      _channelName,
+      description: 'Used for important notifications',
+      importance: Importance.max,
+    );
+
+    await _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
+  }
+
+  /// 🔹 Show notification
+   Future<void> show({
     required String title,
     required String body,
-    required Map<String, dynamic> payload,
+    Map<String, dynamic>? payload,
   }) async {
     final androidDetails = AndroidNotificationDetails(
-      'com.example.chat_app.urgent',
-      'mychannelid',
+      _channelId,
+      _channelName,
       importance: Importance.max,
-      priority: Priority.max,
-      styleInformation: BigTextStyleInformation(
-        body,
-        htmlFormatBigText: true,
-        contentTitle: title,
-        htmlFormatTitle: true,
-      ),
+      priority: Priority.high,
+      styleInformation: BigTextStyleInformation(body),
     );
 
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
+      presentSound: true,
     );
 
-    final notificationDetails = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
-    await flutterLocalNotificationsPlugin.show(
-      0,
+    final notificationId =
+        DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    await _flutterLocalNotificationsPlugin.show(
+      notificationId,
       title,
       body,
-      notificationDetails,
-      payload: jsonEncode(payload),
+      details,
+      payload: payload == null ? null : jsonEncode(payload),
     );
+  }
+
+  /// 🔹 Tap handler
+  static void _onNotificationTap(NotificationResponse response) {
+    if (response.payload != null) {
+      final data = jsonDecode(response.payload!);
+      debugPrint('🔔 Notification tapped: $data');
+
+      // TODO: Navigate using GetX / Navigator
+      // Example:
+      // Get.toNamed('/project', arguments: data);
+    }
   }
 }

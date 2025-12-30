@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_it/get_it.dart';
@@ -38,8 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final pages;
 
   void _requestPermission() async{
-    await notiService.requestPermission();
-     await notiService.initialize(context);
+    await notiService.init(FirebaseAuth.instance.currentUser!.uid);
   }
   @override
   void initState() {
@@ -704,7 +704,7 @@ class TaskIntegrationCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  taskResponseModel.status.value.toUpperCase(),
+                  taskResponseModel.priority.displayName,
                   style: TextStyle(
                     color: getPriorityTextColor(taskResponseModel.priority),
                     fontSize: 10,

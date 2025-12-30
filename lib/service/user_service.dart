@@ -20,46 +20,76 @@ class UserService {
 
   // ---------------- CREATE USER ----------------
   Future<Either<String, String>> createUser({
-  required Map<String, dynamic> requestBody,
-}) async {
-  try {
-    final userInfo = await authService.register(requestBody: requestBody);
-    String? token = await FirebaseMessaging.instance.getToken();
-    return await userInfo.fold(
-      (error) async => Left(error), // Return Left immediately on error
-      (success) async {
-        // Use Firebase UID as the Firestore document ID
-        final docRef = _userRef.doc(success.uid);
-        await docRef.set({
-          'name': requestBody['name'],
-          'email': success.email,
-          'fcm_token': token,
-          'team_members':[]
-        });
-        return Right('User created successfully'); // ✅ Return Right properly
-      },
-    );
-  } catch (e) {
-    return Left('Failed to create user');
+    required Map<String, dynamic> requestBody,
+  }) async {
+    try {
+      final userInfo = await authService.register(requestBody: requestBody);
+      String? token = await FirebaseMessaging.instance.getToken();
+      return await userInfo.fold(
+        (error) async => Left(error), // Return Left immediately on error
+        (success) async {
+          // Use Firebase UID as the Firestore document ID
+          final docRef = _userRef.doc(success.uid);
+          await docRef.set({
+            'name': requestBody['name'],
+            'email': success.email,
+            'fcm_token': token,
+            'team_members': []
+          });
+          return Right('User created successfully'); // ✅ Return Right properly
+        },
+      );
+    } catch (e) {
+      return Left('Failed to create user');
+    }
   }
-}
-
 
   // ---------------- READ USERS ----------------
   Stream<Either<String, List<UserResponseModel>>> getUsers() {
-    return _userRef
-        .snapshots()
-        .map<Either<String, List<UserResponseModel>>>((snapshot) {
-      final users = snapshot.docs.map((doc) {
-        return UserResponseModel.fromFirestore(doc.data(), doc.id);
-      }).toList();
+    final currentUid = FirebaseAuth.instance.currentUser!.uid;
+    final currentUserRef = _userRef.doc(currentUid);
 
-      return Right<String, List<UserResponseModel>>(
-          users); // ✅ specify type explicitly
+    return currentUserRef.snapshots().asyncMap((currentUserSnap) async {
+      if (!currentUserSnap.exists) {
+        return Left<String, List<UserResponseModel>>("Current user not found");
+      }
+
+      print("he he he eheeehre:${currentUserSnap.data()}");
+
+      final teamMembers =
+          List<String>.from(currentUserSnap.data()?['team_members'] ?? []);
+
+      if (teamMembers.isEmpty) {
+        // No team members
+        return Right<String, List<UserResponseModel>>([]);
+      }
+
+      print("checking team members:${teamMembers.toString()}");
+      // Fetch users whose IDs are in team_members
+      final querySnapshot = await _userRef
+          .where(FieldPath.documentId, whereIn: teamMembers)
+          .get();
+
+      print("querySnapshot :${querySnapshot.docs.length.toString()}");
+
+      final users = querySnapshot.docs
+          .map((doc) {
+            print("doc.id: ${doc.id}");
+            print("doc.data(): ${doc.data()}");
+            try {
+              return UserResponseModel.fromFirestore(doc.data(), doc.id);
+            } catch (e) {
+              print("Error converting user: $e");
+              return null;
+            }
+          })
+          .whereType<UserResponseModel>()
+          .toList();
+
+      print("users final list: $users");
+      return Right<String, List<UserResponseModel>>(users);
     }).handleError((e) {
-      // logger.logError('Get Users Error: $e');
-      return Left<String, List<UserResponseModel>>(
-          'Failed to fetch users'); // ✅ specify type explicitly
+      return Left<String, List<UserResponseModel>>("Failed to fetch users");
     });
   }
 
@@ -112,24 +142,22 @@ class UserService {
 
   // ---------- Check User to choose as a member
 
-  Future<Either<bool, UserResponseModel>> checkUser({required String email}) async {
-  try {
-    final query = await _userRef
-        .where('email', isEqualTo: email)
-        .limit(1)
-        .get();
+  Future<Either<bool, UserResponseModel>> checkUser(
+      {required String email}) async {
+    try {
+      final query =
+          await _userRef.where('email', isEqualTo: email).limit(1).get();
 
-    if (query.docs.isEmpty) {
+      if (query.docs.isEmpty) {
+        return const Left(false);
+      }
+
+      final user = UserResponseModel.fromFirestore(
+          query.docs.first.data(), query.docs.first.id);
+      print("what is first:${query.docs.first.data()}");
+      return Right(user); // UID
+    } catch (e) {
       return const Left(false);
     }
-
- final user =
-            UserResponseModel.fromFirestore(query.docs.first.data(), query.docs.first.id);
-    print("what is first:${query.docs.first.data()}");
-    return Right(user); // UID
-  } catch (e) {
-    return const Left(false);
   }
-}
-
 }

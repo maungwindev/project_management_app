@@ -1,16 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:pm_app/core/service/firebase_noiti_service.dart';
 import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:pm_app/models/response_models/response_model.dart';
 
 class TaskService {
   final FirebaseFirestore firestore;
   final CustomLogger logger;
-
+  final FirebaseNotificationService notificationService;
   TaskService({
     required this.firestore,
     required this.logger,
+    required this.notificationService
   });
 
   CollectionReference<Map<String, dynamic>> _taskRef(String projectId) {
@@ -36,8 +39,10 @@ class TaskService {
   required DateTime dueDate,
 }) async {
   try {
+    final currentUid = FirebaseAuth.instance.currentUser!.uid;
     final taskRef = _taskRef(projectId).doc();
 
+    // 1️⃣ Create task
     await taskRef.set({
       'projectId': projectId,
       'title': title,
@@ -46,22 +51,44 @@ class TaskService {
       'priority': priority,
       'assignees': assignees,
       'dueDate': Timestamp.fromDate(dueDate),
-
-      // 🔥 MUST be client timestamps
       'createdAt': Timestamp.now(),
       'updatedAt': Timestamp.now(),
+      'createdBy': currentUid,
     });
 
-    // OPTIONAL — sync project members later
-    firestore.collection('projects').doc(projectId).update({
-      'members': FieldValue.arrayUnion(assignees),
-    });
+    // 2️⃣ Sync project members
+    if (assignees.isNotEmpty) {
+      await firestore.collection('projects').doc(projectId).update({
+        'members': FieldValue.arrayUnion(assignees),
+      });
+    }
+
+    // 3️⃣ 🔔 Send notifications (Firestore-triggered)
+    if (assignees.isNotEmpty) {
+      for (final uid in assignees) {
+        if (uid == currentUid) continue; // ❌ skip self
+
+        await notificationService.sendNotification(
+          fromUid: currentUid,
+          toUid: uid,
+          title: 'New Task Assigned',
+          body: 'You have been assigned a task: $title',
+          data: {
+            'type': 'task',
+            'projectId': projectId,
+            'taskId': taskRef.id,
+          },
+        );
+      }
+    }
 
     return const Right('Task created successfully');
   } catch (e) {
+    debugPrint('Create task error: $e');
     return Left('Failed to create task');
   }
 }
+
 
 
 
@@ -117,22 +144,63 @@ class TaskService {
 
   // ---------------- UPDATE TASK STATUS ONLY ----------------
   Future<Either<String, String>> updateTaskStatus({
-    required String projectId,
-    required String taskId,
-    required String status,
-  }) async {
-    try {
-      await _taskRef(projectId).doc(taskId).update({
-        'status': status,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+  required String projectId,
+  required String taskId,
+  required String status,
+}) async {
+  try {
+    final currentUid = FirebaseAuth.instance.currentUser!.uid;
+    final taskDocRef = _taskRef(projectId).doc(taskId);
 
-      return const Right('Task status updated');
-    } catch (e) {
-      logger.logError('Update Status Error: $e');
-      return Left('Failed to update status');
+    // 1️⃣ Read task
+    final taskSnap = await taskDocRef.get();
+    if (!taskSnap.exists) {
+      return Left('Task not found');
     }
+
+    final taskData = taskSnap.data()!;
+    final oldStatus = taskData['status'] as String;
+    final taskTitle = taskData['title'] as String;
+    final List<String> assignees =
+        List<String>.from(taskData['assignees'] ?? []);
+
+    // 2️⃣ Status unchanged → skip
+    if (oldStatus == status) {
+      return const Right('Status unchanged');
+    }
+
+    // 3️⃣ Update status
+    await taskDocRef.update({
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    // 4️⃣ 🔔 Notify assignees
+    for (final uid in assignees) {
+      print('final uid::${uid}');
+      //if (uid == currentUid) continue; // ❌ skip self
+
+      await notificationService.sendNotification(
+        fromUid: currentUid,
+        toUid: uid,
+        title: 'Task Status Updated',
+        body: 'Task "$taskTitle" is now $status',
+        data: {
+          'type': 'task_status',
+          'projectId': projectId,
+          'taskId': taskId,
+          'status': status,
+        },
+      );
+    }
+
+    return const Right('Task status updated');
+  } catch (e) {
+    logger.logError('Update Status Error: $e');
+    return Left('Failed to update status');
   }
+}
+
 
   // ---------------- DELETE TASK ----------------
   Future<Either<String, String>> deleteTask({

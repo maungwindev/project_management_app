@@ -1,152 +1,114 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:pm_app/core/const/firebase_const.dart';
-import 'package:pm_app/core/network/dio_client.dart';
 import 'package:pm_app/core/service/local_noti_service.dart';
-import 'package:get_it/get_it.dart';
-import 'package:googleapis_auth/auth_io.dart' as auth;
 
 class FirebaseNotificationService {
-  
   final LocalNotificationService localNotificationService;
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   FirebaseNotificationService({required this.localNotificationService});
 
-  String? _cachedAccessToken;
+  /// Initialize notification service
+  Future<void> init(String currentUid) async {
+    // 1️⃣ Request permission
+    await _requestPermission();
 
-  /// Request Firebase FCM permissions
-  Future<void> requestPermission() async {
-    final settings = await _firebaseMessaging.requestPermission(
+    // 2️⃣ Initialize local notifications
+    await localNotificationService.initialize();
+
+    // 3️⃣ Save/update device FCM token
+    await _saveFcmToken(currentUid);
+
+    // 4️⃣ Listen for token refresh
+    _listenTokenRefresh(currentUid);
+
+    // 5️⃣ Listen for notification requests targeted to this user
+    _listenNotificationRequests(currentUid);
+  }
+
+  /// Request notification permission
+  Future<void> _requestPermission() async {
+    final settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
+    debugPrint('Notification permission: ${settings.authorizationStatus}');
+  }
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('User granted permission');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      debugPrint('User granted provisional permission');
-    } else {
-      debugPrint('User declined or has not accepted permission');
+  /// Save or update FCM token in Firestore
+  Future<void> _saveFcmToken(String uid) async {
+    final token = await _messaging.getToken();
+    if (token != null) {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'fcmToken': token,
+      }, SetOptions(merge: true));
+      debugPrint('FCM token saved: $token');
     }
   }
 
-  /// Get Firebase device token
-  Future<String> getToken() async {
-    final token = await _firebaseMessaging.getToken();
-    return token ?? '';
-  }
-
-  /// Initialize Firebase notifications
-  Future<void> initialize(BuildContext context) async {
-    await localNotificationService.initializeLocalNotification();
-
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint("=> Message opened: ${message.notification?.title}");
-      // Handle navigation or other logic here
+  /// Listen for token refresh
+  void _listenTokenRefresh(String uid) {
+    _messaging.onTokenRefresh.listen((newToken) async {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'fcmToken': newToken,
+      }, SetOptions(merge: true));
+      debugPrint('FCM token refreshed: $newToken');
     });
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      debugPrint("=> Message received: ${message.data}");
-      await localNotificationService.showNotification(
-        title: message.notification?.title ?? '',
-        body: message.notification?.body ?? '',
-        payload: message.data,
-      );
-    });
-
-    await handleInitialMessage();
   }
 
-  /// Handle initial message when the app is launched from a notification
-  Future<void> handleInitialMessage() async {
-    final RemoteMessage? message = await _firebaseMessaging.getInitialMessage();
-    if (message != null) {
-      // Handle the initial message
+  /// Listen for notification requests targeted to this user
+  void _listenNotificationRequests(String uid) {
+  FirebaseFirestore.instance
+      .collection('notificationRequests')
+      .where('toUid', isEqualTo: uid)
+      .snapshots()
+      .listen((snapshot) {
+    for (var docChange in snapshot.docChanges) {
+      if (docChange.type == DocumentChangeType.added) {
+        final data = docChange.doc.data();
+        if (data != null) {
+          // Show local notification
+          localNotificationService.show(
+            title: data['title'] ?? 'New Notification',
+            body: data['body'] ?? '',
+            payload: data['data'] ?? {},
+          );
+
+          // Delete request after handling
+          try {
+            FirebaseFirestore.instance
+                .collection('notificationRequests')
+                .doc(docChange.doc.id)
+                .delete();
+          } catch (e) {
+            debugPrint('Could not delete notification: $e');
+          }
+        }
+      }
     }
-  }
+  });
+}
 
-  /// Get access token for Firebase Cloud Messaging
-  Future<String> _getAccessToken() async {
-    if (_cachedAccessToken != null) return _cachedAccessToken!;
 
-    const serviceAccountJson = FirebaseConst.serviceJson;
-
-    const scopes = ["https://www.googleapis.com/auth/firebase.messaging"];
-
-    try {
-      final client = await auth.clientViaServiceAccount(
-        auth.ServiceAccountCredentials.fromJson(serviceAccountJson),
-        scopes,
-      );
-
-      final credentials = await auth.obtainAccessCredentialsViaServiceAccount(
-        auth.ServiceAccountCredentials.fromJson(serviceAccountJson),
-        scopes,
-        client,
-      );
-
-      client.close();
-      _cachedAccessToken = credentials.accessToken.data;
-      return _cachedAccessToken!;
-    } catch (e) {
-      debugPrint('Error obtaining access token: $e');
-      rethrow;
-    }
-  }
-
-  /// Send notification to a specific device
+  /// Send notification request (user-to-user)
+  /// This is safe, uses Firestore to trigger notifications
   Future<void> sendNotification({
-    required String deviceToken,
+    required String fromUid,
+    required String toUid,
     required String title,
     required String body,
-    required Map<String, dynamic> data,
+    Map<String, dynamic>? data,
   }) async {
-    final DioClient dioClient = Get.find();
-    final serverAccessTokenKey = await _getAccessToken();
-
-    debugPrint("Server access token key: $serverAccessTokenKey");
-
-    const endpointFirebaseCloudMessaging =
-        'https://fcm.googleapis.com/v1/projects/${FirebaseConst.projectName}/messages:send';
-
-    final Map<String, dynamic> message = {
-      "message": {
-        "token": deviceToken,
-        "notification": {
-          "title": title,
-          "body": body,
-        },
-        "data": data,
-      },
-    };
-
-    final response = await dioClient.postRequestWithCustomHeader(
-      apiUrl: endpointFirebaseCloudMessaging,
-      requestBody: message,
-      header: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $serverAccessTokenKey',
-      },
-    );
-
-    if (response.statusCode != 200) {
-      debugPrint('Failed to send notification');
-    }
-  }
-
-  /// Get the FCM token from the device
-  Future<String> getFcmToken() async {
-    try {
-      final token = await _firebaseMessaging.getToken();
-      debugPrint("FCM Token: $token");
-      return token ?? '';
-    } catch (e) {
-      debugPrint("Error getting FCM token: $e");
-      return '';
-    }
+    // Add notification request to Firestore
+    await FirebaseFirestore.instance.collection('notificationRequests').add({
+      'fromUid': fromUid,
+      'toUid': toUid,
+      'title': title,
+      'body': body,
+      'data': data ?? {},
+      'timestamp': FieldValue.serverTimestamp(),
+    });
   }
 }
