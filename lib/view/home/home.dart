@@ -38,9 +38,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   late final pages;
 
-  void _requestPermission() async{
+  void _requestPermission() async {
     await notiService.init(FirebaseAuth.instance.currentUser!.uid);
   }
+
   @override
   void initState() {
     super.initState();
@@ -128,8 +129,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Reports',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: Icon(Icons.person_2_outlined),
+            label: 'Profile',
           ),
         ],
       ),
@@ -317,7 +318,6 @@ class DashboardContent extends StatefulWidget {
 }
 
 class _DashboardContentState extends State<DashboardContent> {
-  
   final InternetConnectionController internetController = Get.find();
   @override
   void initState() {
@@ -341,6 +341,18 @@ class _DashboardContentState extends State<DashboardContent> {
     }
   }
 
+  String getGreeting() {
+    final hour = DateTime.now().hour;
+
+    if (hour < 12) {
+      return 'Good Morning ☀️';
+    } else if (hour < 17) {
+      return 'Good Afternoon 🌤️';
+    } else {
+      return 'Good Evening 🌙';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
@@ -352,135 +364,171 @@ class _DashboardContentState extends State<DashboardContent> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Project Overview",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// 🔒 FIXED HEADER
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "${getGreeting()}",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                Spacer(),
+                Obx(() {
+                  switch (internetController.status.value) {
+                    case InternetStatus.disconnected:
+                      return const Icon(Icons.wifi_off_outlined);
+                    case InternetStatus.connected:
+                    case InternetStatus.initial:
+                    case InternetStatus.loading:
+                      return const SizedBox.shrink();
+                  }
+                }),
+                GestureDetector(onTap:()=>throw Exception(),child: Icon(Icons.notifications_outlined)),
+              ],
+            ),
+           
+            const SizedBox(height: 16),
 
-                  Obx((){
-                    switch(internetController.status.value){
-                      case InternetStatus.disconnected:
-                      return Icon(Icons.wifi_off_outlined);
-                      case InternetStatus.connected:
-                      return SizedBox.shrink();
-                      
-                      case InternetStatus.initial:
-                        // TODO: Handle this case.
-                        return SizedBox.shrink();
-                      case InternetStatus.loading:
-                        // TODO: Handle this case.
-                        return SizedBox.shrink();
-                    }
-                  }),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "Reconfigure your workflow and handle repetitive tasks with integration.",
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 24),
-
-              // Project Cards
-              Obx(() {
-                final projects = widget.projectController.projectList;
-                if (projects.isEmpty) {
-                  return SizedBox(
-                    height: 220,
-                    child: Center(
-                        child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
+            /// 🔽 SCROLLABLE CONTENT
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// Project Overview Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Image.asset(
-                          'assets/images/empty_project.png',
-                          width: 100,
-                          height: 100,
-                        ),
-                        Text("No projects found"),
-                      ],
-                    )),
-                  );
-                }
-
-                return SizedBox(
-                  height: 220,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: projects.length > 4 ? 4 : projects.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: SizedBox(
-                          width: 250,
-                          child: IntegrationCard(
-                            projectResponseModel: projects[index],
+                        const Text(
+                          "Project Overview",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      );
-                    },
-                  ),
-                );
-              }),
-              const SizedBox(height: 24),
-
-              // Tasks Today
-              const Text(
-                "Today Tasks",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "Check for today tasks which is priority of your task.",
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 24),
-              Obx(() {
-                if (widget.taskController.isDashboardLoading.value) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final todayTasks = widget.taskController.todayTasks;
-                if (todayTasks.isEmpty) {
-                  return SizedBox(
-                    height: 220,
-                    child: Center(
-                        child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/empty_task.png',
-                          width: 100,
-                          height: 80,
-                        ),
-                        Text("Good News! Today, you haven't tasks"),
                       ],
-                    )),
-                  );
-                }
+                    ),
 
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: todayTasks.length,
-                  itemBuilder: (_, index) {
-                    return TaskIntegrationCard(
-                      taskResponseModel: todayTasks[index],
-                    );
-                  },
-                );
-              }),
-              const SizedBox(height: 24),
-            ],
-          ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Reconfigure your workflow and handle repetitive tasks with integration.",
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    /// Project Cards
+                    Obx(() {
+                      final projects = widget.projectController.projectList;
+
+                      if (projects.isEmpty) {
+                        return SizedBox(
+                          height: 220,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/images/empty_project.png',
+                                  width: 100,
+                                ),
+                                const Text("No projects found"),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return SizedBox(
+                        height: 220,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: projects.length > 4 ? 4 : projects.length,
+                          itemBuilder: (_, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: SizedBox(
+                                width: 250,
+                                child: IntegrationCard(
+                                  projectResponseModel: projects[index],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(height: 24),
+
+                    /// Today Tasks
+                    const Text(
+                      "Today Tasks",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Check for today tasks which is priority of your task.",
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Obx(() {
+                      if (widget.taskController.isDashboardLoading.value) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+
+                      final todayTasks = widget.taskController.todayTasks;
+
+                      if (todayTasks.isEmpty) {
+                        return SizedBox(
+                          height: 220,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/images/empty_task.png',
+                                  width: 100,
+                                  height: 80,
+                                ),
+                                const Text(
+                                  "Good News! Today, you haven't tasks",
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: todayTasks.length,
+                        itemBuilder: (_, index) {
+                          return TaskIntegrationCard(
+                            taskResponseModel: todayTasks[index],
+                          );
+                        },
+                      );
+                    }),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -634,7 +682,7 @@ class IntegrationCard extends StatelessWidget {
 class TaskIntegrationCard extends StatelessWidget {
   final TaskResponseModel taskResponseModel;
 
-   TaskIntegrationCard({
+  TaskIntegrationCard({
     super.key,
     required this.taskResponseModel,
   });
@@ -652,7 +700,6 @@ class TaskIntegrationCard extends StatelessWidget {
     }
   }
 
-  
   Map<TaskPriority, Color> priorityBgColors = {
     TaskPriority.low: const Color(0xFFDFF7DF),
     TaskPriority.medium: const Color(0xFFFFF4E5),

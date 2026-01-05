@@ -36,6 +36,8 @@ class _TaskScreenState extends State<TaskScreen> {
     TaskPriority.high: const Color(0xFFEB5757),
   };
 
+  
+
   @override
   void initState() {
     super.initState();
@@ -201,6 +203,7 @@ class _TaskScreenState extends State<TaskScreen> {
                         statusColor: Colors.blue,
                         avatarCount: task.assignees.length,
                         taskModel: task,
+                        // syncData: task.syncState,
                         onEdit: () {
                           Get.toNamed('/create-task', arguments: {
                             'projectId': projectId,

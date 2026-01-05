@@ -37,6 +37,9 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
 
   bool get isEdit => editingTask != null;
 
+  final FocusNode titleFocus = FocusNode();
+  final FocusNode descFocus = FocusNode();
+
   // ---------------- INIT ----------------
   @override
   void initState() {
@@ -59,180 +62,207 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    titleCtrl.dispose();
+    descCtrl.dispose();
+    titleFocus.dispose();
+    descFocus.dispose();
+    super.dispose();
+  }
+
   // ---------------- UI ----------------
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          isEdit ? 'Edit Task' : 'New Task',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: _closeKeyboard,
+      child: Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: Text(
+            isEdit ? 'Edit Task' : 'New Task',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
 
-                    // -------- TITLE --------
-                    buildLabel('Title'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: titleCtrl,
-                      style: TextStyle(
-                        color: _textColor,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: buildInputDecoration(
-                        hintText: 'Enter Task Title',
-                        isPrefix: false,
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // -------- DESCRIPTION --------
-                    buildLabel('Description'),
-                    const SizedBox(height: 10),
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: TextField(
-                        controller: descCtrl,
-                        maxLines: null,
-                        expands: true,
-                        textAlignVertical: TextAlignVertical.top,
+                      // -------- TITLE --------
+                      buildLabel('Title'),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: titleCtrl,
+                        style: TextStyle(
+                          color: _textColor,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                        ),
                         decoration: buildInputDecoration(
-                          hintText: 'Add details...',
+                          hintText: 'Enter Task Title',
                           isPrefix: false,
                         ),
+                        focusNode: titleFocus,
+                        autofocus: false,
                       ),
-                    ),
 
-                    const SizedBox(height: 30),
+                      const SizedBox(height: 30),
 
-                    // -------- PRIORITY --------
-                    _buildSectionLabel('PRIORITY'),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        _buildPriorityButton('Low', _lowPriorityColor),
-                        const SizedBox(width: 12),
-                        _buildPriorityButton('Medium', _mediumPriorityColor),
-                        const SizedBox(width: 12),
-                        _buildPriorityButton('High', _highPriorityColor),
-                      ],
-                    ),
+                      // -------- DESCRIPTION --------
+                      buildLabel('Description'),
+                      const SizedBox(height: 10),
+                      Container(
+                        height: 150,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: descCtrl,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          decoration: buildInputDecoration(
+                            hintText: 'Add details...',
+                            isPrefix: false,
+                          ),
+                          focusNode: descFocus,
+                          autofocus: false,
+                        ),
+                      ),
 
-                    const SizedBox(height: 30),
+                      const SizedBox(height: 30),
 
-                    // -------- ASSIGNEES --------
-                    _buildListItem(
-                      icon: Icons.people_outline,
-                      title: 'Assignees',
-                      subtitle: 'Who is working on this?',
-                      trailing: _buildAssigneesTrailing(),
-                    ),
+                      // -------- PRIORITY --------
+                      _buildSectionLabel('PRIORITY'),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          _buildPriorityButton('Low', _lowPriorityColor),
+                          const SizedBox(width: 12),
+                          _buildPriorityButton('Medium', _mediumPriorityColor),
+                          const SizedBox(width: 12),
+                          _buildPriorityButton('High', _highPriorityColor),
+                        ],
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 30),
 
-                    // -------- DUE DATE --------
-                    _buildListItem(
-                      icon: Icons.calendar_today_outlined,
-                      title: 'Due Date',
-                      subtitle: 'Set a deadline',
-                      trailing: _buildDueDateTrailing(),
-                    ),
+                      // -------- ASSIGNEES --------
+                      _buildListItem(
+                        icon: Icons.people_outline,
+                        title: 'Assignees',
+                        subtitle: 'Who is working on this?',
+                        trailing: _buildAssigneesTrailing(),
+                      ),
 
-                    const SizedBox(height: 30),
-                  ],
-                ),
-              ),
-            ),
+                      const SizedBox(height: 16),
 
-            // -------- ACTION BUTTON --------
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _accentColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: controller.isCreating.value
-                    ? null
-                    : () async {
-                      Get.back();
-                        if (isEdit) {
-                          // 🔁 UPDATE
-                          await controller.updateTask(
-                            projectId: projectId,
-                            taskId: editingTask!.id,
-                            data: {
-                              'title': titleCtrl.text,
-                              'description': descCtrl.text,
-                              'priority': _selectedPriority,
-                              'assignees':
-                                  controller.selectedAssignees.toList(),
-                              'dueDate': selectedDueDate.value,
-                            },
-                          );
+                      // -------- DUE DATE --------
+                      _buildListItem(
+                        icon: Icons.calendar_today_outlined,
+                        title: 'Due Date',
+                        subtitle: 'Set a deadline',
+                        trailing: _buildDueDateTrailing(),
+                      ),
 
-                          //  controller.selectedAssignees.clear();
-                          //  Get.back();
-                        } else {
-                          // ➕ CREATE
-                          await controller.createTask(
-                            projectId: projectId,
-                            title: titleCtrl.text,
-                            description: descCtrl.text,
-                            status: 'todo',
-                            priority: _selectedPriority,
-                            assignees:
-                                controller.selectedAssignees.toList(),
-                            dueDate: selectedDueDate.value,
-                          );
-                        }
-
-                        
-                        if (controller.successMessage.isNotEmpty) {
-                          showMaterialSnackBar(context, controller.successMessage.value);
-                  
-                        } else if (controller.errorMessage.isNotEmpty) {
-                          showMaterialSnackBar(context, controller.errorMessage.value);
-                 
-                        }
-
-                        controller.selectedAssignees.clear();
-                        
-                      },
-                child: controller.isCreating.value?LoadingWidget():
-                Text(
-                  isEdit ? 'Update Task' : 'Create Task',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                      const SizedBox(height: 30),
+                    ],
                   ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
-          ],
+              // -------- ACTION BUTTON --------
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _accentColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: controller.isCreating.value
+                      ? null
+                      : () async {
+                          Get.back();
+                          if (isEdit) {
+                            _closeKeyboard();
+                            // 🔁 UPDATE
+                            await controller.updateTask(
+                              projectId: projectId,
+                              taskId: editingTask!.id,
+                              data: {
+                                'title': titleCtrl.text,
+                                'description': descCtrl.text,
+                                'priority': _selectedPriority,
+                                'assignees':
+                                    controller.selectedAssignees.toList(),
+                                'dueDate': selectedDueDate.value,
+                              },
+                            );
+
+                            if (controller.successMessage.isNotEmpty) {
+                              showMaterialSnackBar(
+                                  context, controller.successMessage.value);
+                            } else if (controller.errorMessage.isNotEmpty) {
+                              showMaterialSnackBar(
+                                  context, controller.errorMessage.value);
+                            }
+
+                            //  controller.selectedAssignees.clear();
+                            //  Get.back();
+                          } else {
+                            _closeKeyboard();
+                            // ➕ CREATE
+                            await controller.createTask(
+                              projectId: projectId,
+                              title: titleCtrl.text,
+                              description: descCtrl.text,
+                              status: 'todo',
+                              priority: _selectedPriority,
+                              assignees: controller.selectedAssignees.toList(),
+                              dueDate: selectedDueDate.value,
+                            );
+
+                            if (controller.successMessage.isNotEmpty) {
+                              showMaterialSnackBar(
+                                  context, controller.successMessage.value);
+                            } else if (controller.errorMessage.isNotEmpty) {
+                              showMaterialSnackBar(
+                                  context, controller.errorMessage.value);
+                            }
+                          }
+
+                          controller.selectedAssignees.clear();
+                        },
+                  child: controller.isCreating.value
+                      ? LoadingWidget()
+                      : Text(
+                          isEdit ? 'Update Task' : 'Create Task',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
@@ -256,13 +286,16 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     final isSelected = _selectedPriority == label;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedPriority = label),
+        onTap: () {
+          _closeKeyboard();
+          setState(() => _selectedPriority = label);
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12), 
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color:isSelected ? _accentColor : Colors.grey,
+              color: isSelected ? _accentColor : Colors.grey,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -270,7 +303,10 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
             children: [
               CircleAvatar(radius: 5, backgroundColor: color),
               const SizedBox(height: 8),
-              Text(label,style: TextStyle( fontWeight: FontWeight.w500),),
+              Text(
+                label,
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
             ],
           ),
         ),
@@ -329,13 +365,11 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                     child: Icon(Icons.person, size: 18, color: Colors.white),
                   ),
                   GestureDetector(
-                    onTap: () =>
-                        controller.selectedAssignees.remove(id),
+                    onTap: () => controller.selectedAssignees.remove(id),
                     child: const CircleAvatar(
                       radius: 8,
                       backgroundColor: Colors.red,
-                      child: Icon(Icons.close,
-                          size: 10, color: Colors.white),
+                      child: Icon(Icons.close, size: 10, color: Colors.white),
                     ),
                   ),
                 ],
@@ -358,6 +392,8 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
   Widget _buildDueDateTrailing() {
     return GestureDetector(
       onTap: () async {
+        _closeKeyboard();
+
         final picked = await showDatePicker(
           context: context,
           initialDate: selectedDueDate.value,
@@ -367,21 +403,21 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
         if (picked != null) selectedDueDate.value = picked;
       },
       child: Obx(() => Container(
-        padding: EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.blue,
-          borderRadius: BorderRadius.all(Radius.circular(10))
-          
-        ),
-        child: Text(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.all(Radius.circular(10))),
+            child: Text(
               '${selectedDueDate.value.day}/${selectedDueDate.value.month}/${selectedDueDate.value.year}',
-              style: const TextStyle(fontWeight: FontWeight.w500,color: Colors.white),
+              style: const TextStyle(
+                  fontWeight: FontWeight.w500, color: Colors.white),
             ),
-      )),
+          )),
     );
   }
 
   void _showAddAssigneeDialog() {
+    _closeKeyboard();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -411,9 +447,20 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
           );
         }),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Done')),
+          TextButton(
+              onPressed: () {
+                FocusScope.of(context).unfocus(); // 🔥 CLOSE KEYBOARD
+                Navigator.of(context).pop();
+              },
+              child: const Text('Done')),
         ],
       ),
     );
+  }
+
+  void _closeKeyboard() {
+    titleFocus.unfocus();
+    descFocus.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 }

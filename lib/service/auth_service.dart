@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
@@ -45,7 +46,8 @@ class AuthService {
         print('Message: ${e.message}');
       }
       return Left(e.message ?? 'Firebase login failed');
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       if (kDebugMode) {
         print('Unexpected error: $e');
       }
@@ -81,7 +83,8 @@ class AuthService {
         print('Message: ${e.message}');
       }
       return Left(e.message ?? 'Firebase register failed');
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       if (kDebugMode) {
         print('Unexpected error: $e');
       }

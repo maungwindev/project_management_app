@@ -2,6 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum TaskStatus { todo, inProgress, done }
 enum TaskPriority { low, medium, high }
+enum SyncState {
+  synced,
+  pending,
+  offline,
+}
+
 
 extension TaskStatusX on TaskStatus {
   /// save to Firestore
@@ -54,6 +60,7 @@ class TaskResponseModel {
   final DateTime? dueDate;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+   final SyncState syncState; // 🔥 NEW
 
   TaskResponseModel({
     required this.id,
@@ -63,30 +70,36 @@ class TaskResponseModel {
     required this.priority,
     required this.projectId,
     required this.assignees,
+      required this.syncState,
     this.dueDate,
     this.createdAt,
     this.updatedAt,
   });
 
-  factory TaskResponseModel.fromFirestore(
+   factory TaskResponseModel.fromFirestore(
     String id,
-    Map<String, dynamic> data,
-  ) {
+    Map<String, dynamic> data, {
+    required SnapshotMetadata metadata,
+  }) {
+    final syncState = metadata.hasPendingWrites
+        ? (metadata.isFromCache ? SyncState.offline : SyncState.pending)
+        : SyncState.synced;
+
     return TaskResponseModel(
       id: id,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       status: TaskStatusX.fromValue(data['status']),
-      projectId:data['projectId'] ?? '',
       priority: _parsePriority(data['priority']),
+      projectId: data['projectId'] ?? '',
       assignees: List<String>.from(data['assignees'] ?? []),
-      dueDate: data['dueDate'] is Timestamp
-    ? (data['dueDate'] as Timestamp).toDate()
-    : data['dueDate'] as DateTime?,
+      dueDate: (data['dueDate'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      syncState: syncState,
     );
   }
+
 
   static TaskStatus _parseStatus(String? value) {
     switch (value) {

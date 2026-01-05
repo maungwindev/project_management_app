@@ -61,6 +61,7 @@ dependencies:
   custom_refresh_indicator: ^4.0.1
   get: ^4.7.2
   firebase_auth: ^5.7.0
+  firebase_crashlytics: ^4.3.10
 
 dev_dependencies:
   flutter_test:

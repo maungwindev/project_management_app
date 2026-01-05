@@ -58,6 +58,7 @@ class FirebaseNotificationService {
     });
   }
 
+  
   /// Listen for notification requests targeted to this user
   void _listenNotificationRequests(String uid) {
   FirebaseFirestore.instance

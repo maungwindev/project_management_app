@@ -36,6 +36,8 @@ class TaskController extends GetxController {
 
   final Map<String, StreamSubscription> _todayTaskSubs = {};
 
+  final Map<String, Rx<SyncState>> taskSyncStates = {};
+
   // ---------------- INIT ----------------
   @override
   void onInit() {
@@ -160,14 +162,14 @@ class TaskController extends GetxController {
     );
 
     isCreating.value = false;
+
     result.fold(
-      (error) => errorMessage.value = error,
+      (error) {
+        errorMessage.value = error;
+      },
       (_) {
-        int index = taskList.indexWhere((t) => t.id == taskId);
-        if (index != -1) {
-          taskList[index] = TaskResponseModel.fromFirestore(taskId, data);
-          taskList.refresh();
-        }
+        // ✅ DO NOTHING to taskList
+        // Firestore snapshots will update it automatically
         successMessage.value = 'Task updated';
       },
     );
@@ -270,7 +272,11 @@ class TaskController extends GetxController {
         todayTasks.removeWhere((t) => t.projectId == project.id);
 
         for (final doc in snapshot.docs) {
-          final task = TaskResponseModel.fromFirestore(doc.id, doc.data());
+          final task = TaskResponseModel.fromFirestore(
+            doc.id,
+            doc.data(),
+            metadata: doc.metadata,
+          );
           if (_isToday(task.dueDate)) {
             todayTasks.add(task);
           }
@@ -293,5 +299,22 @@ class TaskController extends GetxController {
     return date.year == now.year &&
         date.month == now.month &&
         date.day == now.day;
+  }
+
+  Rx<SyncState> getSyncState(String taskId) {
+    taskSyncStates.putIfAbsent(taskId, () => SyncState.pending.obs);
+    return taskSyncStates[taskId]!;
+  }
+
+  void markSynced(String taskId) {
+    final state = getSyncState(taskId);
+    state.value = SyncState.synced;
+
+    // Hide after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (state.value == SyncState.synced) {
+        state.value = SyncState.offline;
+      }
+    });
   }
 }

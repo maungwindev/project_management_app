@@ -43,6 +43,8 @@ class UserController extends GetxController {
   var inviteLoading = false.obs;
   StreamSubscription<List<Map<String, dynamic>>>? _pendingInvitesSub;
 
+  var sameUserEmail = ''.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -151,6 +153,11 @@ class UserController extends GetxController {
     if (email.trim().isEmpty) return;
 
     checkUserStatus.value = CheckUserStatus.loading;
+    if(currentUserInfo.value!.email == email){
+       sameUserEmail.value = 'Your Email Can\'t assign as a memeber!';
+        checkUserStatus.value = CheckUserStatus.error;
+       return;
+    }
 
     final result = await userRepository.checkUser(email: email.trim());
 
@@ -160,6 +167,7 @@ class UserController extends GetxController {
       },
       (r) {
         userInfoByCheckingMember.value = r;
+        sameUserEmail.value = '';
         checkUserStatus.value = CheckUserStatus.success;
       },
     );

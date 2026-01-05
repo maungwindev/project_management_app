@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:pm_app/core/utils/custom_logger.dart';
 import 'package:pm_app/models/response_models/project_model.dart';
@@ -53,9 +54,11 @@ class ProjectService {
 
       logService.logInfo("Project created successfully");
       return const Right('Project Created Successfully!');
-    } on FirebaseException catch (e) {
+    } on FirebaseException catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Failed to create project: ${e.message}');
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Unexpected error: $e');
     }
   }
@@ -77,9 +80,11 @@ class ProjectService {
 
       logService.logInfo("Success");
       return const Right('Project Updated Successfully!');
-    } on FirebaseException catch (e) {
+    } on FirebaseException catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Failed to create project: ${e.message}');
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Unexpected error: $e');
     }
   }
@@ -95,7 +100,7 @@ class ProjectService {
         .map<Either<String, List<ProjectResponseModel>>>((snapshot) {
       try {
         final projects = snapshot.docs.map((doc) {
-          return ProjectResponseModel.fromFirestore(doc.id, doc.data());
+          return ProjectResponseModel.fromFirestore(doc.id, doc.data(),metadata: doc.metadata);
         }).toList();
 
         logService.logInfo(projects.toString());
@@ -123,10 +128,12 @@ class ProjectService {
 
       logService.logInfo("Project $projectId status updated to $status");
       return const Right('Project status updated successfully!');
-    } on FirebaseException catch (e) {
+    } on FirebaseException catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       logService.logError('Failed to update status: ${e.message}');
       return Left('Failed to update project status: ${e.message}');
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       logService.logError('Unexpected error: $e');
       return Left('Unexpected error: $e');
     }
@@ -141,7 +148,8 @@ class ProjectService {
           .doc(projectId)
           .delete();
       return const Right('Project deleted successfully');
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Failed to delete task');
     }
   }

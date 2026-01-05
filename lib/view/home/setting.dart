@@ -120,9 +120,9 @@ class SettingScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Setting',
+              'Profile',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -197,7 +197,7 @@ class SettingScreen extends StatelessWidget {
         Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              "Features",
+              "Setting",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,

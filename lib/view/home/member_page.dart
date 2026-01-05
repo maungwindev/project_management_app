@@ -42,7 +42,8 @@ class MemberPage extends StatelessWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 10),
+            padding:
+                const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 10),
             child: CupertinoSearchTextField(
               placeholder: "Search members",
             ),
@@ -72,13 +73,18 @@ class MemberPage extends StatelessWidget {
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         child: ListTile(
-                          title: Text('$InvitedByName',style: TextStyle(fontSize: 16,fontWeight: FontWeight.w600),), // Ideally fetch user name
+                          title: Text(
+                            '$InvitedByName',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
+                          ), // Ideally fetch user name
                           subtitle: Text('Status: ${invite['status']}'),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.check, color: Colors.green),
+                                icon: const Icon(Icons.check,
+                                    color: Colors.green),
                                 onPressed: () {
                                   userController.respondToInvite(
                                       pairKey: pairKey, accept: true);
@@ -86,7 +92,8 @@ class MemberPage extends StatelessWidget {
                                 },
                               ),
                               IconButton(
-                                icon: const Icon(Icons.close, color: Colors.red),
+                                icon:
+                                    const Icon(Icons.close, color: Colors.red),
                                 onPressed: () {
                                   userController.respondToInvite(
                                       pairKey: pairKey, accept: false);
@@ -102,31 +109,33 @@ class MemberPage extends StatelessWidget {
               ),
             );
           }),
-
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Container(
-                width: double.infinity,
-                child: Column(
-                  children: taskController.allUsers.map((user){
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 20, right: 20, top: 5, bottom: 5),
-                      child: Card(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          child: ListTile(
-                                  
-                            title: Text(user.name), // Ideally fetch user name
-                            subtitle: Text(user.email),
-                            trailing: Icon(Icons.person),
-                          ),
-                        ),
-                    );
-                  }).toList(),
-              ),
-            ),
+            child: Obx(() {
+              final users = taskController.allUsers;
+
+              if (users.isEmpty) {
+                return const Center(
+                  child: Text("No members yet"),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: users.length,
+                itemBuilder: (_, index) {
+                  final user = users[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text(user.name),
+                      subtitle: Text(user.email),
+                      trailing: const Icon(Icons.person),
+                    ),
+                  );
+                },
+              );
+            }),
           ),
-          )
         ],
       ),
     );
@@ -141,8 +150,10 @@ class MemberPage extends StatelessWidget {
       barrierDismissible: false,
       builder: (_) => AddMemberDialog(
         onCancel: () {
+           Get.back();
           userController.resetCheckUser();
-          Get.back();
+          userController.sameUserEmail.value = '';
+         
         },
         onSuccess: (_) {
           userController.sendInvite(
@@ -188,26 +199,34 @@ class _AddMemberDialogState extends State<AddMemberDialog> {
         title: const Text('Add New Member'),
         content: Form(
           key: _formKey,
-          child: TextFormField(
-            controller: _controller,
-            focusNode: _focusNode,
-            decoration: InputDecoration(
-              labelText: 'Member Email',
-              border: const OutlineInputBorder(),
-              suffixIcon: _buildSuffixIcon(),
-            ),
-            onChanged: (_) {
-              userController.resetCheckUser();
-            },
-            onFieldSubmitted: (_) {
-              userController.checkUser(email: _controller.text);
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Email required';
-              }
-              return null;
-            },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _controller,
+                focusNode: _focusNode,
+                decoration: InputDecoration(
+                  labelText: 'Member Email',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: _buildSuffixIcon(),
+                ),
+                onChanged: (_) {
+                  userController.resetCheckUser();
+                },
+                onFieldSubmitted: (_) {
+                  userController.checkUser(email: _controller.text);
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Email required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 5,),
+              if(userController.sameUserEmail.value.isNotEmpty)
+              Text("** ${userController.sameUserEmail}",style: TextStyle(fontSize: 14,color: Colors.red),)
+            ],
           ),
         ),
         actions: [
@@ -218,9 +237,14 @@ class _AddMemberDialogState extends State<AddMemberDialog> {
           ElevatedButton(
             onPressed: userController.checkUserStatus.value ==
                     CheckUserStatus.success
-                ? () {
+                ? () async {
+                   Get.back();
                     widget.onSuccess(userController.userInfoByCheckingMember);
-                    Get.back();
+
+                    // await Future.delayed(const Duration(milliseconds: 300));
+                    // if (Get.isDialogOpen == true) {
+                    //   Get.back();
+                    // }
                   }
                 : null,
             child: const Text('Send Invite'),

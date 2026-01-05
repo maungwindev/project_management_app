@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:pm_app/models/response_models/user_model.dart';
 import 'package:pm_app/service/auth_service.dart';
@@ -39,16 +41,23 @@ class UserService {
           return Right('User created successfully'); // ✅ Return Right properly
         },
       );
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Failed to create user');
     }
   }
 
   // ---------------- READ USERS ----------------
   Stream<Either<String, List<UserResponseModel>>> getUsers() {
-    final currentUid = FirebaseAuth.instance.currentUser!.uid;
-    final currentUserRef = _userRef.doc(currentUid);
+ final user = FirebaseAuth.instance.currentUser;
 
+  if (user == null) {
+    debugPrint('User not logged in, skipping getUsers');
+    return const Stream.empty();
+  }
+
+  final currentUid = user.uid;
+    final currentUserRef = _userRef.doc(currentUid);
     return currentUserRef.snapshots().asyncMap((currentUserSnap) async {
       if (!currentUserSnap.exists) {
         return Left<String, List<UserResponseModel>>("Current user not found");
@@ -89,6 +98,7 @@ class UserService {
       print("users final list: $users");
       return Right<String, List<UserResponseModel>>(users);
     }).handleError((e) {
+      
       return Left<String, List<UserResponseModel>>("Failed to fetch users");
     });
   }
@@ -123,7 +133,8 @@ class UserService {
         'email': email,
       });
       return const Right('User updated successfully');
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       // logger.logError('Update User Error: $e');
       return Left('Failed to update user');
     }
@@ -134,7 +145,8 @@ class UserService {
     try {
       await _userRef.doc(userId).delete();
       return const Right('User deleted successfully');
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       // logger.logError('Delete User Error: $e');
       return Left('Failed to delete user');
     }
@@ -156,7 +168,8 @@ class UserService {
           query.docs.first.data(), query.docs.first.id);
       print("what is first:${query.docs.first.data()}");
       return Right(user); // UID
-    } catch (e) {
+    } catch (e,s) {
+       FirebaseCrashlytics.instance.recordError(e, s);
       return const Left(false);
     }
   }

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pm_app/controller/project_controller.dart';
 import 'package:pm_app/core/const/app_colors.dart';
+import 'package:pm_app/core/const/size_const.dart';
 import 'package:pm_app/models/response_models/product_model.dart';
 import 'package:pm_app/models/response_models/project_model.dart';
+import 'package:pm_app/models/response_models/response_model.dart';
 
 class ProjectCard extends StatelessWidget {
   final String priority;
@@ -40,6 +42,7 @@ class ProjectCard extends StatelessWidget {
   });
 
   final controller = Get.find<ProjectController>();
+  static final Set<String> _shownSyncedOnce = {};
 
   Color _statusColor(ProjectStatus status) {
     switch (status) {
@@ -51,6 +54,37 @@ class ProjectCard extends StatelessWidget {
         return const Color(0xFF10B981); // Emerald Green 
      default:
         return Colors.black;
+    }
+  }
+
+  Widget buildSyncIndicator() {
+    switch (projectModel.syncState) {
+      case SyncState.offline:
+        return const Icon(Icons.cloud_off, color: Colors.orange, size: 16);
+
+      case SyncState.pending:
+        // Reset so synced can show once later
+        _shownSyncedOnce.remove(projectModel.id);
+        return const SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        );
+
+      case SyncState.synced:
+        // 👇 show only ONCE after pending
+        if (_shownSyncedOnce.contains(projectModel.id)) {
+          return const SizedBox.shrink();
+        }
+
+        _shownSyncedOnce.add(projectModel.id);
+
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 1, end: 0),
+          duration: const Duration(seconds: 2),
+          builder: (_, value, child) => Opacity(opacity: value, child: child),
+          child: const Icon(Icons.cloud_done, color: Colors.green, size: 16),
+        );
     }
   }
 
@@ -123,13 +157,24 @@ class ProjectCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           // Title
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              // color: Colors.white,
-            ),
+          Row(
+            children: [
+              SizedBox(
+                width: SizeConst.globalWidth(context) / 1.3,
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    overflow: TextOverflow.ellipsis
+                    // color: Colors.white,
+                  ),
+                  maxLines: 1,
+                ),
+              ),
+               const SizedBox(width: 6),
+              buildSyncIndicator(),
+            ],
           ),
           const SizedBox(height: 12),
           // Description

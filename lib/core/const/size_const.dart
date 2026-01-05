@@ -7,6 +7,16 @@ class SizeConst {
   /// Vertical spacing constant
   static const double globalPadding = 16;
 
+  // / Global Width 
+  static double globalWidth(BuildContext context){
+    return MediaQuery.of(context).size.width;
+  }
+
+   // / Global Height 
+  static double globalHeight(BuildContext context){
+    return MediaQuery.of(context).size.height;
+  }
+
   /// Card or container padding (Note: can't be const since it depends on dynamic values)
   static const EdgeInsets kCardPadding = EdgeInsets.symmetric(
     horizontal: 16,

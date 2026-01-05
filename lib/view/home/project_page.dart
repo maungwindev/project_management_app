@@ -220,7 +220,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 const Text(
                   'My Projects',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

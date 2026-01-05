@@ -20,8 +20,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmpasswordController =
       TextEditingController();
-  final UserController userController = Get.find<UserController>();
-  
+  late  final UserController userController;
+
   final InternetConnectionController internetController = Get.find();
 
   bool isLoading = false;
@@ -29,7 +29,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
   // Example login function
   void register() async {
-    if (_formKey.currentState!.validate()) {
+    final formState = _formKey.currentState;
+    if (formState == null) {
+      debugPrint("FormState is null");
+      return;
+    }
+    if (formState.validate()) {
       final success = await userController.createUser(
           name: nameController.text,
           email: emailController.text,
@@ -59,6 +64,21 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   @override
+void initState() {
+  super.initState();
+  userController = Get.find<UserController>();
+}
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmpasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -77,7 +97,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     'Welcome to PM',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                   const SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   // Subtitle
                   Text(
                     'Get started - it\'s free. No credit card needed.',
@@ -93,8 +113,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: nameController,
                     keyboardType: TextInputType.text,
                     decoration: buildInputDecoration(
-                      hintText: 'Enter Your Name',prefixIcon: Icons.person
-                    ),
+                        hintText: 'Enter Your Name', prefixIcon: Icons.person),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your name';
@@ -111,7 +130,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   TextFormField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: buildInputDecoration(hintText: 'Enter Your Email', prefixIcon: Icons.email),
+                    decoration: buildInputDecoration(
+                        hintText: 'Enter Your Email', prefixIcon: Icons.email),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
@@ -132,7 +152,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: passwordController,
                     obscureText: !isObscured,
                     decoration: buildInputDecoration(
-                      hintText: 'Enter Your Password', prefixIcon: Icons.lock,suffixIcon: IconButton(
+                        hintText: 'Enter Your Password',
+                        prefixIcon: Icons.lock,
+                        suffixIcon: IconButton(
                             onPressed: () {
                               setState(() {
                                 isObscured = !isObscured;
@@ -158,7 +180,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   TextFormField(
                     controller: confirmpasswordController,
                     obscureText: !isObscured,
-                    decoration: buildInputDecoration(hintText: 'Re-Enter Your Password', prefixIcon: Icons.lock),
+                    decoration: buildInputDecoration(
+                        hintText: 'Re-Enter Your Password',
+                        prefixIcon: Icons.lock),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
@@ -179,8 +203,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         return SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed:(){
-                              showMaterialSnackBar(context, 'Check Your Internet!');
+                            onPressed: () {
+                              showMaterialSnackBar(
+                                  context, 'Check Your Internet!');
                             },
                             style: ElevatedButton.styleFrom(
                               // backgroundColor: _backgroundColor,
@@ -191,27 +216,29 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               elevation: 0,
                             ),
-                            child:  const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Register',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      // SizedBox(width: 8),
-                                      // Icon(Icons.arrow_forward_rounded),
-                                    ],
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Register',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                   ),
+                                ),
+                                // SizedBox(width: 8),
+                                // Icon(Icons.arrow_forward_rounded),
+                              ],
+                            ),
                           ),
                         );
                       case InternetStatus.connected:
                         return SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed:  userController.isRegister.value ? null : register,
+                            onPressed: userController.isRegister.value
+                                ? null
+                                : register,
                             style: ElevatedButton.styleFrom(
                               // backgroundColor: _backgroundColor,
                               foregroundColor: Colors.white,
@@ -246,7 +273,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         return const SizedBox.shrink();
                     }
                   }),
-                 
 
                   const SizedBox(height: 16),
                   SizedBox(
@@ -255,20 +281,20 @@ class _RegisterPageState extends State<RegisterPage> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Already have an account yet?",style: TextStyle(
+                        Text(
+                          "Already have an account yet?",
+                          style: TextStyle(
                             fontSize: 16,
-                          ),),
+                          ),
+                        ),
                         TextButton(
                           onPressed: () {
                             Get.offNamed('/login');
-                    
                           },
                           child: const Text('Sign In'),
                           style: TextButton.styleFrom(
-                            textStyle: TextStyle(
-                              fontWeight: FontWeight.bold,fontSize: 16
-                            )
-                          ),
+                              textStyle: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
                         ),
                       ],
                     ),
