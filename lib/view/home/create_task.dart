@@ -54,7 +54,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
       // 🔥 PREFILL DATA
       titleCtrl.text = editingTask!.title;
       descCtrl.text = editingTask!.description;
-      _selectedPriority = editingTask!.priority.name;
+      _selectedPriority = editingTask!.priority.displayName;
       selectedDueDate.value = editingTask!.dueDate!;
       controller.selectedAssignees.assignAll(editingTask!.assignees);
     } else {
@@ -66,7 +66,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
   void dispose() {
     titleCtrl.dispose();
     descCtrl.dispose();
-    titleFocus.dispose();
+    titleFocus.dispose();  
     descFocus.dispose();
     super.dispose();
   }

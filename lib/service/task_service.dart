@@ -63,20 +63,21 @@ class TaskService {
           await notificationService.sendNotification(
             fromUid: currentUid,
             toUid: uid,
-            title: 'New Task Assigned',
+            title: '🤗 New Task Assigned',
             body: 'You have been assigned a task: $title',
             data: {
               'type': 'task',
               'projectId': projectId,
-              'taskId': taskRef.id,
+              'ownerId': currentUid,
+              'taskId':taskRef.id
             },
           );
         }
       }
 
       return const Right('Task created successfully');
-    } catch (e,s) {
-       FirebaseCrashlytics.instance.recordError(e, s);
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s);
       debugPrint('Create task error: $e');
       return Left('Failed to create task');
     }
@@ -98,18 +99,62 @@ class TaskService {
         .map<Either<String, List<TaskResponseModel>>>((snapshot) {
       try {
         final tasks = snapshot.docs.map((doc) {
-          return TaskResponseModel.fromFirestore(doc.id, doc.data(),  metadata: doc.metadata, );
+          return TaskResponseModel.fromFirestore(
+            doc.id,
+            doc.data(),
+            metadata: doc.metadata,
+          );
         }).where((task) {
           // User can see task if they are owner OR assigned
           return uid == ownerId || task.assignees.contains(uid);
         }).toList();
 
         return Right(tasks);
-      } catch (e,s) {
-         FirebaseCrashlytics.instance.recordError(e, s);
+      } catch (e, s) {
+        FirebaseCrashlytics.instance.recordError(e, s);
         return Left('Failed to parse task data: $e');
       }
     }).handleError((e) => Left('Firestore error: $e'));
+  }
+
+  // --------------- GetByTaskId ------------------
+  Future<Either<String, TaskResponseModel>> getTaskById({
+    required String projectId,
+    required String taskId,
+    required String ownerId, // project owner
+  }) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+
+      final taskDoc = await firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('tasks')
+          .doc(taskId)
+          .get();
+
+      if (!taskDoc.exists) {
+        return const Left('Task not found');
+      }
+
+      final task = TaskResponseModel.fromFirestore(
+        taskDoc.id,
+        taskDoc.data()!,
+        metadata: taskDoc.metadata,
+      );
+
+      // 🔐 Permission check
+      final canView = uid == ownerId || task.assignees.contains(uid);
+
+      if (!canView) {
+        return const Left('You do not have permission to view this task');
+      }
+
+      return Right(task);
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s);
+      return Left('Failed to load task: $e');
+    }
   }
 
   // ---------------- UPDATE TASK ----------------
@@ -125,8 +170,8 @@ class TaskService {
       });
 
       return const Right('Task updated successfully');
-    } catch (e,s) {
-       FirebaseCrashlytics.instance.recordError(e, s);
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s);
       logger.logError('Update Task Error: $e');
       return Left('Failed to update task');
     }
@@ -174,19 +219,20 @@ class TaskService {
         await notificationService.sendNotification(
           fromUid: currentUid,
           toUid: uid,
-          title: 'Task Status Updated',
-          body: 'Task "$taskTitle" is now $status',
+          title: '📢Task Status Updated',
+          body: 'Task $taskTitle is now $status 🔥',
           data: {
             'type': 'task_status',
-            'taskId': taskId,
             'projectId': projectId,
+            'ownerId': currentUid,
+            'taskId':taskId
           },
         );
       }
 
       return const Right('Task status updated');
-    } catch (e,s) {
-       FirebaseCrashlytics.instance.recordError(e, s);
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Failed to update status');
     }
   }
@@ -223,8 +269,8 @@ class TaskService {
       });
 
       return const Right('Assignee added');
-    } catch (e,s) {
-       FirebaseCrashlytics.instance.recordError(e, s);
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Failed to add assignee');
     }
   }
@@ -245,8 +291,8 @@ class TaskService {
       });
 
       return const Right('Assignee removed');
-    } catch (e,s) {
-       FirebaseCrashlytics.instance.recordError(e, s);
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s);
       return Left('Failed to remove assignee');
     }
   }
@@ -267,15 +313,19 @@ class TaskService {
         .map<Either<String, List<TaskResponseModel>>>((snapshot) {
       try {
         final tasks = snapshot.docs
-            .map((doc) => TaskResponseModel.fromFirestore(doc.id, doc.data(),  metadata: doc.metadata,))
+            .map((doc) => TaskResponseModel.fromFirestore(
+                  doc.id,
+                  doc.data(),
+                  metadata: doc.metadata,
+                ))
             .where((task) {
           // user must be owner or assignee
           return task.assignees.contains(uid);
         }).toList();
 
         return Right(tasks);
-      } catch (e,s) {
-         FirebaseCrashlytics.instance.recordError(e, s);
+      } catch (e, s) {
+        FirebaseCrashlytics.instance.recordError(e, s);
         return Left('Failed to parse dashboard tasks: $e');
       }
     });

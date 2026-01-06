@@ -9,6 +9,7 @@ import 'package:pm_app/view/home/home.dart';
 import 'package:pm_app/view/home/member_page.dart';
 import 'package:pm_app/view/home/setting.dart';
 import 'package:pm_app/view/home/task.dart';
+import 'package:pm_app/view/home/task_detail.dart';
 import 'package:pm_app/view/home/test.dart';
 
 final List<GetPage> appRoutes = [
@@ -52,5 +53,9 @@ final List<GetPage> appRoutes = [
   GetPage(
     name: '/members',
     page: () => const MemberPage(),
+  ),
+  GetPage(
+    name: '/task-detail',
+    page: () => const TaskDetailScreen(),
   ),
 ];

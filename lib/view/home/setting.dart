@@ -23,6 +23,7 @@ class SettingScreen extends StatelessWidget {
       final email = user?.email ?? '';
       final firstLetter =
           displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+      final pendingUserCount = userController.pendingInvites.length;
 
       return SafeArea(
         child: Container(
@@ -30,7 +31,7 @@ class SettingScreen extends StatelessWidget {
             color: Colors.white,
             child: isMobile
                 ? _mobileLayout(displayName, email, firstLetter, authController,
-                    internetController)
+                    internetController,pendingUserCount)
                 : Center(
                     child: Text("Maintaince"),
                   )),
@@ -110,7 +111,7 @@ class SettingScreen extends StatelessWidget {
       String email,
       String firstLetter,
       AuthController authController,
-      InternetConnectionController internetController) {
+      InternetConnectionController internetController,int pendingCount) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -220,12 +221,25 @@ class SettingScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(Icons.group,color: Colors.grey,),
-                  Text(
-                    "Members",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        "Members",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      SizedBox(width: 5,),
+                      if(pendingCount !=0)
+                        Container(
+                          width: 30,
+                          height: 20,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(shape: BoxShape.circle,color: Colors.blue),
+                          child: Text("${pendingCount.toString()}",style: TextStyle(fontSize: 14,color: Colors.white),)
+                          )
+                    ],
                   ),
                   Spacer(),
                   Icon(Icons.arrow_forward_ios_outlined)

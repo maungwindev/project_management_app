@@ -46,6 +46,15 @@ class TaskRepository {
     return taskService.getTasks(projectId: projectId,ownerId: ownerId);
   }
 
+  // ------------------ GetByTaskId -----------------------
+  Future<Either<String, TaskResponseModel>> getByTaskId ({
+    required String projectId,
+    required String ownerId,
+    required String taskId
+  }) async{
+    return await taskService.getTaskById(projectId: projectId,ownerId: ownerId,taskId: taskId);
+  }
+
   // ---------------- UPDATE TASK ----------------
   Future<Either<String, String>> updateTask({
     required String projectId,

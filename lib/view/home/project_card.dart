@@ -65,11 +65,7 @@ class ProjectCard extends StatelessWidget {
       case SyncState.pending:
         // Reset so synced can show once later
         _shownSyncedOnce.remove(projectModel.id);
-        return const SizedBox(
-          width: 14,
-          height: 14,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        );
+        return const SizedBox.shrink();
 
       case SyncState.synced:
         // 👇 show only ONCE after pending
@@ -160,7 +156,7 @@ class ProjectCard extends StatelessWidget {
           Row(
             children: [
               SizedBox(
-                width: SizeConst.globalWidth(context) / 1.3,
+                width: SizeConst.globalWidth(context) / 1.4,
                 child: Text(
                   title,
                   style: const TextStyle(

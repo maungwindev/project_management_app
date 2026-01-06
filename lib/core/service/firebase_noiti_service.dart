@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:pm_app/core/service/local_noti_service.dart';
 
 class FirebaseNotificationService {
@@ -11,23 +12,37 @@ class FirebaseNotificationService {
 
   /// Initialize notification service
   Future<void> init(String currentUid) async {
-    // 1️⃣ Request permission
     await _requestPermission();
-
-    // 2️⃣ Initialize local notifications
     await localNotificationService.initialize();
-
-    // 3️⃣ Save/update device FCM token
     await _saveFcmToken(currentUid);
-
-    // 4️⃣ Listen for token refresh
     _listenTokenRefresh(currentUid);
-
-    // 5️⃣ Listen for notification requests targeted to this user
     _listenNotificationRequests(currentUid);
+
+    // Foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final data = message.data;
+      localNotificationService.show(
+        title: message.notification?.title ?? 'New Notification',
+        body: message.notification?.body ?? '',
+        payload: data.isNotEmpty ? data : null,
+      );
+    });
+
+    // App opened from background notification
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      final data = message.data;
+      if (data.isNotEmpty) {
+        _handleTap(data);
+      }
+    });
+
+    // App opened from terminated state
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null && initialMessage.data.isNotEmpty) {
+      _handleTap(initialMessage.data);
+    }
   }
 
-  /// Request notification permission
   Future<void> _requestPermission() async {
     final settings = await _messaging.requestPermission(
       alert: true,
@@ -37,7 +52,6 @@ class FirebaseNotificationService {
     debugPrint('Notification permission: ${settings.authorizationStatus}');
   }
 
-  /// Save or update FCM token in Firestore
   Future<void> _saveFcmToken(String uid) async {
     final token = await _messaging.getToken();
     if (token != null) {
@@ -48,7 +62,6 @@ class FirebaseNotificationService {
     }
   }
 
-  /// Listen for token refresh
   void _listenTokenRefresh(String uid) {
     _messaging.onTokenRefresh.listen((newToken) async {
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
@@ -58,43 +71,32 @@ class FirebaseNotificationService {
     });
   }
 
-  
-  /// Listen for notification requests targeted to this user
   void _listenNotificationRequests(String uid) {
-  FirebaseFirestore.instance
-      .collection('notificationRequests')
-      .where('toUid', isEqualTo: uid)
-      .snapshots()
-      .listen((snapshot) {
-    for (var docChange in snapshot.docChanges) {
-      if (docChange.type == DocumentChangeType.added) {
-        final data = docChange.doc.data();
-        if (data != null) {
-          // Show local notification
-          localNotificationService.show(
-            title: data['title'] ?? 'New Notification',
-            body: data['body'] ?? '',
-            payload: data['data'] ?? {},
-          );
-
-          // Delete request after handling
-          try {
+    FirebaseFirestore.instance
+        .collection('notificationRequests')
+        .where('toUid', isEqualTo: uid)
+        .snapshots()
+        .listen((snapshot) {
+      for (var docChange in snapshot.docChanges) {
+        if (docChange.type == DocumentChangeType.added) {
+          final data = docChange.doc.data();
+          if (data != null) {
+            localNotificationService.show(
+              title: data['title'] ?? 'New Notification',
+              body: data['body'] ?? '',
+              payload: data['data'] != null ? data['data'] : null,
+            );
+            // Delete after showing
             FirebaseFirestore.instance
                 .collection('notificationRequests')
                 .doc(docChange.doc.id)
                 .delete();
-          } catch (e) {
-            debugPrint('Could not delete notification: $e');
           }
         }
       }
-    }
-  });
-}
+    });
+  }
 
-
-  /// Send notification request (user-to-user)
-  /// This is safe, uses Firestore to trigger notifications
   Future<void> sendNotification({
     required String fromUid,
     required String toUid,
@@ -102,7 +104,6 @@ class FirebaseNotificationService {
     required String body,
     Map<String, dynamic>? data,
   }) async {
-    // Add notification request to Firestore
     await FirebaseFirestore.instance.collection('notificationRequests').add({
       'fromUid': fromUid,
       'toUid': toUid,
@@ -111,5 +112,14 @@ class FirebaseNotificationService {
       'data': data ?? {},
       'timestamp': FieldValue.serverTimestamp(),
     });
+  }
+
+  void _handleTap(Map<String, dynamic> data) {
+    if (data['type'] == 'task') {
+      Get.toNamed('/task-detail', arguments: {
+        'projectId': data['projectId'],
+        'taskId': data['taskId'],
+      });
+    }
   }
 }

@@ -38,6 +38,8 @@ class TaskController extends GetxController {
 
   final Map<String, Rx<SyncState>> taskSyncStates = {};
 
+  final Rxn<TaskResponseModel> getTaskInformation = Rxn<TaskResponseModel>();
+
   // ---------------- INIT ----------------
   @override
   void onInit() {
@@ -248,6 +250,27 @@ class TaskController extends GetxController {
       (_) {
         taskList.refresh();
         successMessage.value = 'Task deleted';
+      },
+    );
+  }
+
+  Future<void> getTaskById(
+      {required String ownerId,
+      required String projectId,
+      required String taskId}) async {
+    getTaskInformation.value = null;
+    final result = await taskRepository.getByTaskId(
+      projectId: projectId,
+      ownerId: ownerId,
+      taskId: taskId,
+    );
+
+    result.fold(
+      (error) {
+        errorMessage.value = error;
+      },
+      (task) {
+        getTaskInformation.value = task; // ✅ correct
       },
     );
   }

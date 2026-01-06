@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
 
 class LocalNotificationService {
   static final LocalNotificationService _instance =
@@ -11,15 +12,13 @@ class LocalNotificationService {
   LocalNotificationService._internal();
 
   static final FlutterLocalNotificationsPlugin
-      _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+      _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  /// 🔹 Channel ID (MUST be constant)
   static const String _channelId = 'high_importance_channel';
   static const String _channelName = 'High Importance Notifications';
 
-  /// 🔹 Initialize (call from main & background)
-   Future<void> initialize() async {
+  /// Initialize service
+  Future<void> initialize() async {
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -42,7 +41,7 @@ class LocalNotificationService {
     await _createAndroidChannel();
   }
 
-  /// 🔹 Android channel (REQUIRED)
+  /// Create Android notification channel
   static Future<void> _createAndroidChannel() async {
     const androidChannel = AndroidNotificationChannel(
       _channelId,
@@ -57,8 +56,8 @@ class LocalNotificationService {
         ?.createNotificationChannel(androidChannel);
   }
 
-  /// 🔹 Show notification
-   Future<void> show({
+  /// Show notification
+  Future<void> show({
     required String title,
     required String body,
     Map<String, dynamic>? payload,
@@ -68,7 +67,12 @@ class LocalNotificationService {
       _channelName,
       importance: Importance.max,
       priority: Priority.high,
-      styleInformation: BigTextStyleInformation(body),
+      styleInformation: BigTextStyleInformation(
+        body,
+        contentTitle: title,
+        htmlFormatBigText: true,
+        htmlFormatContentTitle: true,
+      ),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -82,8 +86,7 @@ class LocalNotificationService {
       iOS: iosDetails,
     );
 
-    final notificationId =
-        DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
     await _flutterLocalNotificationsPlugin.show(
       notificationId,
@@ -94,15 +97,20 @@ class LocalNotificationService {
     );
   }
 
-  /// 🔹 Tap handler
+  /// Handle notification tap
   static void _onNotificationTap(NotificationResponse response) {
     if (response.payload != null) {
       final data = jsonDecode(response.payload!);
       debugPrint('🔔 Notification tapped: $data');
 
-      // TODO: Navigate using GetX / Navigator
-      // Example:
-      // Get.toNamed('/project', arguments: data);
+      // Example navigation using GetX
+      if (data['type'] == 'task' || data['type'] == 'task_status') {
+        Get.toNamed('/task-detail', arguments: {
+          'projectId': data['projectId'],
+          'ownerId': data['ownerId'],
+          'taskId':data['taskId']
+        });
+      } else if (data['type'] == 'invite') Get.toNamed('/members');
     }
   }
 }

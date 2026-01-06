@@ -18,37 +18,46 @@ import 'package:pm_app/firebase_options.dart';
 import 'package:pm_app/injection.dart';
 
 Future<void> main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
-   await Firebase.initializeApp(
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await FirebaseCrashlytics.instance
-    .setCrashlyticsCollectionEnabled(!kDebugMode);
 
-  
-  /// 🔥 REGISTER BACKGROUND HANDLER
-  FirebaseMessaging.onBackgroundMessage(
-    firebaseMessagingBackgroundHandler,
-  );
+  /// ✅ Only enable Crashlytics for mobile (not Web)
+  if (!kIsWeb) {
+    await FirebaseCrashlytics.instance
+        .setCrashlyticsCollectionEnabled(!kDebugMode);
 
+    // Catch Flutter framework errors
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
+    // Catch platform errors
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
 
+  /// 🔥 Register Firebase Messaging background handler (only for mobile)
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
+  /// Firestore offline persistence
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
-  
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
+  /// Ensure EasyLocalization is initialized
   await EasyLocalization.ensureInitialized();
 
+  /// Dependency Injection (your get_it / injectable setup)
+  // await configureDependencies();
+
+  /// Run the app
   runApp(
     EasyLocalization(
       path: 'assets/translations',
@@ -73,8 +82,8 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitDown,
       DeviceOrientation.portraitUp,
     ]);
-    
-    final sharedPref = SharedPref(); // Or await initialization if async
+
+    final sharedPref = SharedPref(); // sync or await if needed
 
     final ThemeController themeController =
         Get.put(ThemeController(sharedPref: sharedPref));
@@ -89,10 +98,9 @@ class MyApp extends StatelessWidget {
         locale: context.locale,
         supportedLocales: context.supportedLocales,
         localizationsDelegates: context.localizationDelegates,
-        getPages: appRoutes, // your GetX route list
+        getPages: appRoutes,
         initialRoute: '/',
         initialBinding: AppBindings(),
-        // Optionally: translations, fallbackLocale, etc for EasyLocalization + GetX integration
       );
     });
   }
