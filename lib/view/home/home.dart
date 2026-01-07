@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -516,8 +517,18 @@ class _DashboardContentState extends State<DashboardContent> {
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: todayTasks.length,
                         itemBuilder: (_, index) {
-                          return TaskIntegrationCard(
-                            taskResponseModel: todayTasks[index],
+                          return GestureDetector(
+                            onTap: (){
+                              
+                              Get.toNamed('/task-detail',arguments: {
+                                'projectId': todayTasks[index].projectId,
+                                'taskId':todayTasks[index].id,
+                                'ownerId':''
+                              });
+                            },
+                            child: TaskIntegrationCard(
+                              taskResponseModel: todayTasks[index],
+                            ),
                           );
                         },
                       );
@@ -721,7 +732,8 @@ class TaskIntegrationCard extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    return "${date.day} / ${date.month} / ${date.year}";
+    final dateFormat = DateFormat('dd-MMM-yyyy').format(date);
+    return "${dateFormat}";
   }
 
   @override

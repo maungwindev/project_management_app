@@ -40,6 +40,8 @@ class TaskController extends GetxController {
 
   final Rxn<TaskResponseModel> getTaskInformation = Rxn<TaskResponseModel>();
 
+  RxBool isGetTaskInformation = false.obs;
+
   // ---------------- INIT ----------------
   @override
   void onInit() {
@@ -258,6 +260,8 @@ class TaskController extends GetxController {
       {required String ownerId,
       required String projectId,
       required String taskId}) async {
+    
+    isGetTaskInformation.value =true;
     getTaskInformation.value = null;
     final result = await taskRepository.getByTaskId(
       projectId: projectId,
@@ -267,9 +271,11 @@ class TaskController extends GetxController {
 
     result.fold(
       (error) {
+        isGetTaskInformation.value = false;
         errorMessage.value = error;
       },
       (task) {
+        isGetTaskInformation.value = false;
         getTaskInformation.value = task; // ✅ correct
       },
     );

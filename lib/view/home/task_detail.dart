@@ -79,8 +79,16 @@ class _NewTaskScreenState extends State<TaskDetailScreen> {
           ),
         ),
         body: Obx(() {
-           final data = controller.getTaskInformation.value;
-          titleCtrl.text = data!.title;
+          if (controller.isGetTaskInformation.value) {
+            return const Center(child: LoadingWidget());
+          }
+
+          final data = controller.getTaskInformation.value;
+
+          if (data == null) {
+            return const Center(child: Text('Task not found'));
+          }
+          titleCtrl.text = data.title;
           descCtrl.text = data.description;
           _selectedPriority = data.priority.displayName;
           selectedDueDate.value = data.dueDate!;
@@ -112,7 +120,7 @@ class _NewTaskScreenState extends State<TaskDetailScreen> {
                             hintText: 'Enter Task Title',
                             isPrefix: false,
                           ),
-                          focusNode: titleFocus,
+                          // focusNode: titleFocus,
                           autofocus: false,
                           readOnly: true,
                         ),
@@ -137,7 +145,7 @@ class _NewTaskScreenState extends State<TaskDetailScreen> {
                               hintText: 'Add details...',
                               isPrefix: false,
                             ),
-                            focusNode: descFocus,
+                            // focusNode: descFocus,
                             autofocus: false,
                             readOnly: true,
                           ),
@@ -368,14 +376,14 @@ class _NewTaskScreenState extends State<TaskDetailScreen> {
                     backgroundColor: Colors.blueGrey,
                     child: Icon(Icons.person, size: 18, color: Colors.white),
                   ),
-                  GestureDetector(
-                    onTap: () => controller.selectedAssignees.remove(id),
-                    child: const CircleAvatar(
-                      radius: 8,
-                      backgroundColor: Colors.red,
-                      child: Icon(Icons.close, size: 10, color: Colors.white),
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: () => controller.selectedAssignees.remove(id),
+                  //   child: const CircleAvatar(
+                  //     radius: 8,
+                  //     backgroundColor: Colors.red,
+                  //     child: Icon(Icons.close, size: 10, color: Colors.white),
+                  //   ),
+                  // ),
                 ],
               ),
             );
